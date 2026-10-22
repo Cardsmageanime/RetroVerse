@@ -1,0 +1,40 @@
+name: RetroVerse ARM64 Rootfs ext4 Integration
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  integrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image validation utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y e2fsprogs tar
+      - name: Fetch pinned successful ARM64 builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p inputs/rootfs inputs/kernel
+          gh run download 39753280095 --repo "$GITHUB_REPOSITORY" --dir inputs/rootfs
+          gh run download 39717680785 --repo "$GITHUB_REPOSITORY" --dir inputs/kernel
+      - name: Integrate matching modules and create ext4 image
+        run: |
+          sudo bash rootfs/integrate-ext4.sh inputs/rootfs inputs/kernel "$RUNNER_TEMP/retroverse-rootfs.ext4"
+          mkdir -p output
+          cp "$RUNNER_TEMP/retroverse-rootfs.ext4" output/RetroVerse-ARM64-ROOTFS-DEVELOPMENT.ext4
+          sha256sum output/*.ext4 > output/SHA256SUMS
+          cat > output/DO_NOT_FLASH.txt <<'TXT'
+          Root filesystem partition image only. NOT a complete SD-card image.
+          No bootloader, partition table, or device-specific DTB included.
+          Do not flash directly to a device or overwrite Android/eMMC.
+          TXT
+      - name: Upload ext4 rootfs development artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-arm64-ROOTFS-EXT4-DEVELOPMENT-DO-NOT-FLASH
+          path: output/
+          if-no-files-found: error
