@@ -39,5 +39,7 @@
   ],
   "android_device_tree_model_observed": "Amlogic",
   "bootloader_family_observed": "U-Boot",
-  "bootloader_version_verified": false
+  "bootloader_version_verified": false,
+  "android_boot_hardware_observed": "amlogic",
+  "android_proc_cmdline_access": "permission-denied (ADB shell)"
 }
