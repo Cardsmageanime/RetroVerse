@@ -20,10 +20,18 @@ for filename in sys.argv[1:]:
             if m.isdev() or m.isfifo():
                 raise SystemExit(f"Unsupported special file {m.name}")
             if m.issym():
-                # Symlink targets resolve relative to the symlink's parent directory.
-                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), m.linkname))
-                if not safe_relative(resolved):
-                    raise SystemExit(f"Unsafe symlink {m.name}: {m.linkname}")
+                # Debian systemd unit enablement legitimately uses absolute in-image
+                # /lib/systemd/system targets. Admit only this explicit class;
+                # all other absolute symlink targets remain rejected.
+                if m.linkname.startswith("/"):
+                    if not (name.startswith("etc/systemd/system/") and
+                            m.linkname.startswith("/lib/systemd/system/") and
+                            ".." not in PurePosixPath(m.linkname).parts):
+                        raise SystemExit(f"Unsafe absolute symlink {m.name}: {m.linkname}")
+                else:
+                    resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), m.linkname))
+                    if not safe_relative(resolved):
+                        raise SystemExit(f"Unsafe symlink {m.name}: {m.linkname}")
             elif m.islnk():
                 # Tar hardlink targets resolve relative to archive root.
                 if not safe_relative(m.linkname.removeprefix("./")):
