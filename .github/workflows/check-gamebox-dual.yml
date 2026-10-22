@@ -1,0 +1,45 @@
+name: RetroVerse GameBox Dual Verification
+on:
+  push:
+    paths:
+      - '.github/workflows/check-gamebox-dual.yml'
+      - 'hardware/**'
+      - 'boot/tools/**'
+      - 'tests/test_external_boot_evidence.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hardware-evidence:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate GameBox hardware profile
+        run: python3 hardware/tests/check_franklin_profile.py
+      - name: Verify external boot evidence checks
+        run: python3 -m unittest discover -s tests -p test_external_boot_evidence.py -v
+      - name: Report boot-readiness without treating unverified hardware as ready
+        shell: bash
+        run: |
+          set +e
+          python3 hardware/tests/check_external_boot_evidence.py --profile hardware/profiles/vayava-franklin-2gb.json --evidence hardware/evidence/vayava-franklin-external-boot.json
+          result=$?
+          set -e
+          if [ "$result" -eq 0 ]; then
+            echo "Evidence gate: ready according to recorded evidence" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$result" -eq 2 ]; then
+            echo "Evidence gate: BLOCKED — physical GameBox boot is not validated" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Evidence gate script failed with code $result" >&2
+            exit "$result"
+          fi
+  sd-boot-staging:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run external boot staging safety tests
+        run: python3 -m unittest discover -s tests -p 'test_*boot*.py' -v
+      - name: Clarify scope
+        run: |
+          echo "Software checks only: no SD image is flashed or boot-tested." >> "$GITHUB_STEP_SUMMARY"
+          echo "Use external SD preflight workflow separately to validate built kernel/DTB/rootfs artifacts." >> "$GITHUB_STEP_SUMMARY"
