@@ -52,3 +52,11 @@ Do not flash existing GitHub artifact ZIPs or the ext4 partition image as a comp
 **Safest next experiment:** Obtain passive UART boot logs from the existing firmware **only if a documented, non-invasive connector exists**; otherwise find an exact factory firmware release/configuration matching this board/version and inspect its U-Boot environment offline. Collect only redacted command names, boot-source decisions, and SD probing results. Do not change any internal partition or U-Boot environment.
 
 **Status:** external boot candidate only; `external_uboot_boot_path_verified = false`. No RetroVerse `aml_autoscript` or bootable SD image is published until the chain and rollback are understood.
+
+## Offline U-Boot script preflight (2026-10-22)
+
+New: `boot/tools/lint_uboot_script.py` performs a **text-only, nonexecuting** heuristic review of candidate U-Boot commands. Example: `python boot/tools/lint_uboot_script.py path/to/candidate.txt`. It flags firmware/environment writes, boot transfers, unknown commands, variable expansion, chaining, and other non-allowlisted text. The intentionally tiny observational allowlist includes `version`, `mmc list`, and simple `echo`.
+
+**Do not feed it binary `aml_autoscript` images or treat passing as proof of safety.** It is not a parser for the full U-Boot language; unexpected features and platform-specific side effects remain possible. Inspect any candidate manually with exact board firmware documentation. The tool never approves execution, writes to media, changes environment variables, or marks `external_uboot_boot_path_verified` true.
+
+The CI suite now includes its regression tests. Only user-device evidence or exact vendor boot-chain verification can resolve the physical external boot gate.
