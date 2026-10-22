@@ -1,18 +1,31 @@
 #!/usr/bin/env python3
-"""Reject risky tar archive entries before extracting build artifacts."""
-import sys,tarfile
+"""Reject archive entries that escape the destination. Preserve safe Debian symlinks."""
+import posixpath
+import sys
+import tarfile
 from pathlib import PurePosixPath
+
+def safe_relative(path):
+    if not path or path.startswith("/"):
+        return False
+    return posixpath.normpath(path) != ".." and not posixpath.normpath(path).startswith("../")
+
 for filename in sys.argv[1:]:
- with tarfile.open(filename,"r:gz") as tf:
-  for m in tf:
-   name=m.name.removeprefix("./")
-   parts=PurePosixPath(name).parts
-   if m.name.startswith("/") or ".." in parts:
-    raise SystemExit(f"Unsafe archive path {m.name}")
-   if m.isdev() or m.isfifo():
-    raise SystemExit(f"Unsupported special file {m.name}")
-   if m.issym() or m.islnk():
-    target=PurePosixPath(m.linkname)
-    if m.linkname.startswith("/") or ".." in target.parts:
-     raise SystemExit(f"Unsafe archive link {m.name}: {m.linkname}")
-print("Tar path and link checks passed")
+    with tarfile.open(filename, "r:gz") as tf:
+        members = tf.getmembers()
+        for m in members:
+            name = m.name.removeprefix("./")
+            if not safe_relative(name):
+                raise SystemExit(f"Unsafe archive path {m.name}")
+            if m.isdev() or m.isfifo():
+                raise SystemExit(f"Unsupported special file {m.name}")
+            if m.issym():
+                # Symlink targets resolve relative to the symlink's parent directory.
+                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), m.linkname))
+                if not safe_relative(resolved):
+                    raise SystemExit(f"Unsafe symlink {m.name}: {m.linkname}")
+            elif m.islnk():
+                # Tar hardlink targets resolve relative to archive root.
+                if not safe_relative(m.linkname.removeprefix("./")):
+                    raise SystemExit(f"Unsafe hardlink {m.name}: {m.linkname}")
+print("Tar archive path and link boundary checks passed")
