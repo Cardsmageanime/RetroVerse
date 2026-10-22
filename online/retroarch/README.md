@@ -24,3 +24,19 @@ References:
 - https://docs.libretro.com/guides/netplay-getting-started/
 - https://docs.libretro.com/guides/netplay-faq/
 - https://manpages.ubuntu.com/manpages/noble/man6/retroarch.6.html
+
+## Visual menu integration (Windows, Linux, macOS)
+
+The RetroVerse **Online Lobby** now links to a local, opt-in RetroArch Netplay control panel. To start it from the repository root:
+
+```powershell
+py online/retroarch/netplay_ui_server.py
+```
+
+On Linux or macOS, use `python3` instead of `py`. Open `http://127.0.0.1:8768/netplay`, or run the original Neon Showcase and click **RetroArch: Host / Join / Spectate** in **Online Lobby**. The local service also serves the showcase at `http://127.0.0.1:8768/`.
+
+Select Host, Join, or Spectate; enter the **locally installed** libretro core path, the game file path, and a peer address for Join/Spectate. **Validate & Preview** checks the paths and constructs a RetroArch command without running anything. **Launch RetroArch** requires a separate confirmation checkbox and starts the locally installed RetroArch process.
+
+The server listens only on `127.0.0.1`, checks HTTP origin/host and a per-process request token, and has no cross-origin API access. Do not bypass these restrictions or run the service exposed on a public network. It does not install RetroArch, locate game files automatically, find online strangers, forward router ports, or authenticate players. Game content and cores are never uploaded by this service.
+
+Use two properly configured devices with compatible RetroArch cores and legally obtained matching game files to verify real netplay. Note that spectating support and flags can vary by RetroArch/core versions and host settings. Verification of the UI controller code is **not proof of successful two-device gameplay**.
