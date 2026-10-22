@@ -32,3 +32,23 @@ Do not flash existing GitHub artifact ZIPs or the ext4 partition image as a comp
 - Examine **existing local boot files** without touching disks: `python boot/tools/inspect_boot_artifacts.py --kernel path/to/Image --dtb path/to/board.dtb --initramfs path/to/initramfs.cpio.gz`.
 - The artifact checker accepts an uncompressed ARM64 Image, a structurally plausible FDT header, and a gzip/newc initramfs signature. It does **not** validate the entire DTB, kernel version, initramfs integrity, bootloader acceptance, or whether this DTB belongs to the GameBox. Header acceptance must never be interpreted as permission to flash.
 - CI runs both sets of tests; a green workflow confirms only automated software checks, not a physical boot.
+
+## Vendor U-Boot compatibility investigation (2026-10-22)
+
+**Observed on user hardware:** `franklin` Android board, `g12a_u212_2g` DT selection, and vendor U-Boot `2015.01-g51e6fd64e9-dirty`. These facts do not expose the installed U-Boot environment.
+
+**Relevant source-code leads (NOT verified on this exact device):**
+- https://github.com/Amlogic-Lineage/u-boot/blob/khadas-vims-pie_lpddr/board/amlogic/configs/g12a_u212_v1.h describes `CONFIG_DEVICE_PRODUCT "franklin"`; recovery routines may look for `aml_autoscript` via `fatload mmc 0` and `fatload usb 0`, then invoke `autoscr`.
+- https://android.googlesource.com/platform/external/u-boot/+/refs/heads/android-tv-9.0.0_r1/board/amlogic/configs/g12a_u212_v1.h is another related U-Boot tree with `aml_autoscript` recovery logic.
+- https://github-wiki-see.page/m/EmuELEC/EmuELEC/wiki/How-to-Install documents a common Amlogic G12A external-media installation path, but explicitly warns against cross-distro DTBs.
+
+**Critical caveats:**
+1. The installed vendor environment and its actual recovery triggers are unobserved. `aml_autoscript` in source does NOT prove external boot support.
+2. Scripts have U-Boot privileges and can flash/erase internal eMMC. Do NOT execute a generic internet `aml_autoscript` or a recovery update package without auditing every command.
+3. `mmc 0` in U-Boot is a controller/device index, not Android's `/dev/mmcblk0`; never equate the two.
+4. Recovery-to-external-media may require a firmware-specific key/button sequence. Do not trigger factory reset, wipe, erase, store, upgrade, or firmware flashing workflows.
+5. Successful kernel artifact inspection, mounted Android SD, and matching hashes do not validate the board-specific DTB, SD signal integrity, or a physical Linux boot.
+
+**Safest next experiment:** Obtain passive UART boot logs from the existing firmware **only if a documented, non-invasive connector exists**; otherwise find an exact factory firmware release/configuration matching this board/version and inspect its U-Boot environment offline. Collect only redacted command names, boot-source decisions, and SD probing results. Do not change any internal partition or U-Boot environment.
+
+**Status:** external boot candidate only; `external_uboot_boot_path_verified = false`. No RetroVerse `aml_autoscript` or bootable SD image is published until the chain and rollback are understood.
