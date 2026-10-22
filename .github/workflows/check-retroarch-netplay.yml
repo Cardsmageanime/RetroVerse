@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'online/retroarch/**'
+      - 'interface/neon-showcase/index.html'
       - '.github/workflows/check-retroarch-netplay.yml'
   pull_request:
     paths:
       - 'online/retroarch/**'
+      - 'interface/neon-showcase/index.html'
       - '.github/workflows/check-retroarch-netplay.yml'
   workflow_dispatch:
 
@@ -22,6 +24,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile RetroArch bridge
-        run: python -m py_compile online/retroarch/netplay_bridge.py
+        run: python -m py_compile online/retroarch/netplay_bridge.py online/retroarch/netplay_ui_server.py
       - name: Verify host join spectator commands and invalid input
         run: python -m unittest discover -s online/retroarch -p 'test_*.py' -v
