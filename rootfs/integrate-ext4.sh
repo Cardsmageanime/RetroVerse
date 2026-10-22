@@ -15,8 +15,8 @@ trap 'rm -rf "$TMP"' EXIT
 mkdir "$TMP/root"
 # Never trust archive paths: block absolute paths / .. traversal and symlinks outside archive.
 python3 rootfs/check_tar_safety.py "$ROOTFS_TAR" "$MODULES_TAR"
-tar -xzf "$ROOTFS_TAR" -C "$TMP/root" --no-same-owner
-tar -xzf "$MODULES_TAR" -C "$TMP/root" --no-same-owner
+tar -xzf "$ROOTFS_TAR" -C "$TMP/root" --no-same-owner --exclude="./dev/*" --exclude="dev/*"
+tar -xzf "$MODULES_TAR" -C "$TMP/root" --no-same-owner --exclude="./dev/*" --exclude="dev/*"
 test -e "$TMP/root/sbin/init" -o -e "$TMP/root/usr/lib/systemd/systemd"
 test -d "$TMP/root/lib/modules" || test -d "$TMP/root/usr/lib/modules"
 mkdir -p "$(dirname "$OUTPUT")"
