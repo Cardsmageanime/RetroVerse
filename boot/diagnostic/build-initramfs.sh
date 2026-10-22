@@ -15,8 +15,9 @@ mkdir -p "$ROOT/bin" "$ROOT/sbin" "$ROOT/proc" "$ROOT/sys" "$ROOT/dev" "$ROOT/et
 PKG="$(find . -maxdepth 1 -name 'busybox-static_*_arm64.deb' -type f -print -quit)"
 test -n "$PKG" || { echo "Missing downloaded arm64 busybox-static .deb" >&2; exit 2; }
 dpkg-deb -x "$PKG" "$OUT/pkg"
-test -f "$OUT/pkg/bin/busybox"
-cp "$OUT/pkg/bin/busybox" "$ROOT/bin/busybox"
+BUSYBOX="$(find "$OUT/pkg" -type f -name busybox -print -quit)"
+test -n "$BUSYBOX" && test -s "$BUSYBOX" || { echo "ARM64 BusyBox binary missing in package" >&2; exit 2; }
+cp "$BUSYBOX" "$ROOT/bin/busybox"
 readelf -h "$ROOT/bin/busybox" | grep -q 'Machine:.*AArch64'
 if readelf -l "$ROOT/bin/busybox" | grep -q INTERP; then echo 'BusyBox not static' >&2; exit 2; fi
 for c in sh mount mkdir echo uname cat ls dmesg sleep; do ln -s busybox "$ROOT/bin/$c"; done
