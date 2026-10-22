@@ -1,0 +1,40 @@
+name: RetroVerse External SD Preflight
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch successful artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p inputs/kernel inputs/ext4
+          gh run download 39717680785 --repo "$GITHUB_REPOSITORY" --dir inputs/kernel
+          gh run download 39758465329 --repo "$GITHUB_REPOSITORY" --dir inputs/ext4
+      - name: Build read-only preflight manifest
+        run: |
+          mkdir -p output
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          kernel=list(Path("inputs/kernel").rglob("Image"))
+          dtbs=sorted(Path("inputs/kernel").rglob("meson-g12a*.dtb"))
+          rootfs=list(Path("inputs/ext4").rglob("*.ext4"))
+          if len(kernel)!=1 or not dtbs or len(rootfs)!=1: raise SystemExit("Missing/ambiguous inputs")
+          cmd=["python3","boot/tools/inspect_sd_prerequisites.py",
+               "--kernel",str(kernel[0]),"--dtb",str(dtbs[0]),
+               "--rootfs",str(rootfs[0]),"--out","output/preflight.json"]
+          subprocess.run(cmd,check=True)
+          PY
+          printf '%s\n' 'NOT FLASHABLE: board bootloader and DTB unverified.' > output/DO_NOT_FLASH.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-external-sd-PREFLIGHT-NOT-FLASHABLE
+          path: output/
+          if-no-files-found: error
