@@ -12,7 +12,7 @@
     "android_userspace_bits": 32
   },
   "ram_mb_reported": 2007,
-  "soc_candidate": "Amlogic G12A / S905X2 (unconfirmed)",
+  "soc_candidate": "Amlogic G12A platform confirmed by Android device tree; exact chip/board variant unverified",
   "kernel_arch": "arm64",
   "legacy_dtb_reference": "g12a_s905x2_2g.dtb",
   "boot_chain_verified": false,
@@ -33,5 +33,11 @@
     "linux_drm_hdmi_verified": false,
     "linux_panforst_verified": false,
     "notes": "Android-reported graphics do not prove mainline Linux display and GPU driver support"
-  }
+  },
+  "android_device_tree_compatible_observed": [
+    "amlogic,g12a"
+  ],
+  "android_device_tree_model_observed": "Amlogic",
+  "bootloader_family_observed": "U-Boot",
+  "bootloader_version_verified": false
 }
