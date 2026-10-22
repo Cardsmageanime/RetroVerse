@@ -1,5 +1,9 @@
 name: RetroVerse ARM64 Diagnostic Initramfs
 on:
+  push:
+    paths:
+      - 'boot/diagnostic/**'
+      - '.github/workflows/build-diagnostic-initramfs.yml'
   workflow_dispatch:
 permissions:
   contents: read
