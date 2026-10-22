@@ -39,7 +39,7 @@
   ],
   "android_device_tree_model_observed": "Amlogic",
   "bootloader_family_observed": "U-Boot",
-  "bootloader_version_verified": false,
+  "bootloader_version_verified": true,
   "android_boot_hardware_observed": "amlogic",
   "android_proc_cmdline_access": "permission-denied (ADB shell)",
   "android_ro_boot_bootloader_observed": "U-Boot",
@@ -59,5 +59,12 @@
     "capacity_bytes": 115343360000,
     "sd_card_detected": true,
     "boot_verified": false
+  },
+  "uboot_version_observed": "U-Boot 2015.01-g51e6fd64e9-dirty",
+  "android_boot_root_observed": "/dev/mmcblk0p18",
+  "android_boot_display_observed": {
+    "resolution": "1920x1080",
+    "refresh_hz": 60,
+    "outputmode": "1080p60hz"
   }
 }
