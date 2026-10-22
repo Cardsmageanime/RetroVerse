@@ -1,0 +1,29 @@
+name: RetroVerse ARM64 Diagnostic Initramfs
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain ARM64 static BusyBox
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y cpio binutils
+          apt-get download busybox-static:arm64
+      - name: Build diagnostic initramfs
+        run: |
+          bash boot/diagnostic/build-initramfs.sh "$RUNNER_TEMP/retroverse-diagnostic"
+          mkdir -p output
+          cp "$RUNNER_TEMP/retroverse-diagnostic/"*.cpio.gz output/
+          cp "$RUNNER_TEMP/retroverse-diagnostic/SHA256SUMS" output/
+      - name: Upload diagnostic ARM64 userspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-arm64-DIAGNOSTIC-INITRAMFS-NOT-BOOTABLE
+          path: output/
+          if-no-files-found: error
