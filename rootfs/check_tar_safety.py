@@ -1,39 +1,64 @@
 #!/usr/bin/env python3
-"""Reject archive entries that escape the destination. Preserve safe Debian symlinks."""
+"""Validate tar member paths and symlinks before a trusted CI build extraction.
+
+Absolute Linux symlink targets are legitimate *inside* a target rootfs:
+e.g. /etc/alternatives/which -> /usr/bin/which. These are not extraction
+destinations. Reject archive member path escapes, devices, and unsafe links.
+"""
 import posixpath
 import sys
 import tarfile
 from pathlib import PurePosixPath
 
-def safe_relative(path):
-    if not path or path.startswith("/"):
-        return False
-    return posixpath.normpath(path) != ".." and not posixpath.normpath(path).startswith("../")
+def inside_root(path):
+    normalized = posixpath.normpath(path)
+    return normalized not in (".", "..") and not normalized.startswith("../")
 
-for filename in sys.argv[1:]:
-    with tarfile.open(filename, "r:gz") as tf:
+def validate(archive):
+    with tarfile.open(archive, "r:gz") as tf:
         members = tf.getmembers()
+        member_names = set()
+        symlinks = {}
         for m in members:
-            name = m.name.removeprefix("./")
-            if not safe_relative(name):
-                raise SystemExit(f"Unsafe archive path {m.name}")
+            raw = m.name.removeprefix("./")
+            if not raw or raw.startswith("/") or ".." in PurePosixPath(raw).parts or not inside_root(raw):
+                raise ValueError(f"Unsafe archive member path: {m.name}")
+            name = posixpath.normpath(raw)
             if m.isdev() or m.isfifo():
-                raise SystemExit(f"Unsupported special file {m.name}")
+                raise ValueError(f"Unsupported device/FIFO: {m.name}")
             if m.issym():
-                # Debian systemd unit enablement legitimately uses absolute in-image
-                # /lib/systemd/system targets. Admit only this explicit class;
-                # all other absolute symlink targets remain rejected.
-                if m.linkname.startswith("/"):
-                    if not (name.startswith("etc/systemd/system/") and
-                            m.linkname.startswith("/lib/systemd/system/") and
-                            ".." not in PurePosixPath(m.linkname).parts):
-                        raise SystemExit(f"Unsafe absolute symlink {m.name}: {m.linkname}")
+                link = m.linkname
+                # Absolute symlinks are normal in a Linux rootfs; interpret
+                # their targets *relative to the intended rootfs*, not host /.
+                if link.startswith("/"):
+                    target = link.lstrip("/")
+                    if ".." in PurePosixPath(target).parts or not inside_root(target):
+                        raise ValueError(f"Unsafe absolute symlink: {m.name} -> {link}")
                 else:
-                    resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), m.linkname))
-                    if not safe_relative(resolved):
-                        raise SystemExit(f"Unsafe symlink {m.name}: {m.linkname}")
+                    target = posixpath.join(posixpath.dirname(name), link)
+                    if not inside_root(target):
+                        raise ValueError(f"Unsafe relative symlink: {m.name} -> {link}")
+                symlinks[name] = link
             elif m.islnk():
-                # Tar hardlink targets resolve relative to archive root.
-                if not safe_relative(m.linkname.removeprefix("./")):
-                    raise SystemExit(f"Unsafe hardlink {m.name}: {m.linkname}")
-print("Tar archive path and link boundary checks passed")
+                link = m.linkname.removeprefix("./")
+                if m.linkname.startswith("/") or ".." in PurePosixPath(link).parts or not inside_root(link):
+                    raise ValueError(f"Unsafe hardlink: {m.name} -> {m.linkname}")
+            member_names.add(name)
+        # Do not allow extraction of regular content into a member's
+        # symlink subtree. GNU tar could follow that link outside staging.
+        for name in member_names:
+            parts = name.split("/")
+            for i in range(1, len(parts)):
+                ancestor = "/".join(parts[:i])
+                if ancestor in symlinks:
+                    raise ValueError(f"Unsafe archive content below symlink: {name} (via {ancestor})")
+    return len(members)
+
+if __name__ == "__main__":
+    for filename in sys.argv[1:]:
+        try:
+            count = validate(filename)
+            print(f"Checked {count} members: {filename}")
+        except (OSError, tarfile.TarError, ValueError) as e:
+            raise SystemExit(str(e))
+    print("Archive member and symlink checks passed")
