@@ -43,5 +43,11 @@
   "android_boot_hardware_observed": "amlogic",
   "android_proc_cmdline_access": "permission-denied (ADB shell)",
   "android_ro_boot_bootloader_observed": "U-Boot",
-  "android_device_tree_memory_path_observed": "missing: /proc/device-tree/memory"
+  "android_device_tree_memory_path_observed": "missing: /proc/device-tree/memory",
+  "android_device_tree_storage_controllers_observed": {
+    "sd1@ffe05000": "disabled",
+    "sd2@ffe05000": "okay",
+    "sdio@ffe03000": "disabled"
+  },
+  "external_sd_controller_identified": false
 }
