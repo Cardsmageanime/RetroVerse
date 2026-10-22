@@ -1,0 +1,19 @@
+name: RetroVerse Board Probe Safety Tests
+on:
+  push:
+    paths:
+      - 'boot/tools/probe_android_board.py'
+      - 'tests/test_board_probe.py'
+      - '.github/workflows/check-board-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate probe source and tests
+        run: |
+          python3 -m py_compile boot/tools/probe_android_board.py
+          python3 -m unittest discover -s tests -p test_board_probe.py -v
