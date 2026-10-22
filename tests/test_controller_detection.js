@@ -1,0 +1,12 @@
+const assert=require("node:assert/strict");
+const {Registry,describe}=require("../interface/preview/controller-detection.js");
+const p=(index,id)=>({index,id,connected:true,mapping:"standard"});
+const r=new Registry();
+let s=r.update([]);assert.equal(s.active,null);assert.equal(s.controllers.length,0);
+s=r.update([null,p(4,"Xbox"),p(1,"DualSense")]);assert.equal(s.active,1);assert.equal(s.controllers.length,2);
+assert.equal(r.select(4,[p(1,"DualSense"),p(4,"Xbox")]),true);
+s=r.update([p(1,"DualSense"),p(4,"Xbox")]);assert.equal(s.active,4);
+s=r.update([p(1,"DualSense")]);assert.equal(s.active,1);assert.equal(s.changed,true);
+assert.equal(r.select(44,[p(1,"DualSense")]),false);
+assert.equal(describe(p(1,"Test")).name,"Test");
+console.log("Controller detection and selection tests passed");
