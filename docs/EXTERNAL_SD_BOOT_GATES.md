@@ -60,3 +60,11 @@ New: `boot/tools/lint_uboot_script.py` performs a **text-only, nonexecuting** he
 **Do not feed it binary `aml_autoscript` images or treat passing as proof of safety.** It is not a parser for the full U-Boot language; unexpected features and platform-specific side effects remain possible. Inspect any candidate manually with exact board firmware documentation. The tool never approves execution, writes to media, changes environment variables, or marks `external_uboot_boot_path_verified` true.
 
 The CI suite now includes its regression tests. Only user-device evidence or exact vendor boot-chain verification can resolve the physical external boot gate.
+
+## Franklin U-Boot integration scaffold
+
+`boot/tools/plan_franklin_uboot.py` generates a **non-deployable JSON review plan** for the `g12a_u212_2g` / `franklin` candidate board. It documents the intended kernel + DTB + initramfs loading path, unknown MMC index, unverified load addresses and U-Boot command support.
+
+Run: `python boot/tools/plan_franklin_uboot.py`. For a local report: `python boot/tools/plan_franklin_uboot.py --output franklin-review.json` (refuses overwrite). The tool does not generate a binary `aml_autoscript`, a boot script, a flashable SD image, or device-side commands. Values shown for DTB filename and memory load addresses are **illustrative placeholders, not verified hardware settings**.
+
+**Next actual boot-chain work:** determine exact installed U-Boot MMC indices and supported commands through passive vendor boot log or exact matching vendor firmware, validate memory load bounds / overlap against actual firmware DRAM map, check board DTB against Linux, and establish safe fallback. Only then should a deployable script be considered.
