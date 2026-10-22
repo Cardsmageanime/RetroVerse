@@ -1,0 +1,8 @@
+{
+  "board_id": "franklin",
+  "soc_identity_confirmed": false,
+  "board_dtb_matches_compiled_kernel": false,
+  "external_uboot_boot_path_verified": false,
+  "android_internal_storage_untouched": false,
+  "notes": "These gates require physical evidence; never set true from a GitHub Actions build alone."
+}
