@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'online/server/**'
+      - 'online/gameplay/**'
       - 'boot/tools/launch_neon_arm.sh'
       - '.github/workflows/check-online-arm-foundation.yml'
   pull_request:
     paths:
       - 'online/server/**'
+      - 'online/gameplay/**'
       - 'boot/tools/launch_neon_arm.sh'
       - '.github/workflows/check-online-arm-foundation.yml'
   workflow_dispatch:
@@ -27,5 +29,7 @@ jobs:
         run: sh -n boot/tools/launch_neon_arm.sh
       - name: Test lobby and chat protocol
         run: python -m unittest discover -s online/server -p 'test_*.py' -v
-      - name: Byte-compile server
-        run: python -m py_compile online/server/lobby_server.py
+      - name: Byte-compile gameplay server
+        run: python -m py_compile online/server/lobby_server.py online/gameplay/pong_server.py online/gameplay/pong_engine.py
+      - name: Verify gameplay mechanics
+        run: python -m unittest discover -s online/gameplay -p 'test_*.py' -v
