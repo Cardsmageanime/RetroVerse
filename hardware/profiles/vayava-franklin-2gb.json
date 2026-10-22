@@ -49,5 +49,15 @@
     "sd2@ffe05000": "okay",
     "sdio@ffe03000": "disabled"
   },
-  "external_sd_controller_identified": false
+  "external_sd_controller_identified": false,
+  "android_sd_card_observed": {
+    "block_device": "mmcblk1",
+    "host": "sd",
+    "controller": "ffe05000.sd2",
+    "type": "SD",
+    "sectors_512_bytes": 225280000,
+    "capacity_bytes": 115343360000,
+    "sd_card_detected": true,
+    "boot_verified": false
+  }
 }
