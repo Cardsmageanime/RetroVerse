@@ -21,5 +21,17 @@
   "permissions": {
     "flash_internal_storage": false
   },
-  "source": "user-supplied AIDA64 photographs"
+  "source": "user-supplied AIDA64 photographs",
+  "display": {
+    "android_output_width": 1920,
+    "android_output_height": 1080,
+    "android_refresh_hz": 60,
+    "orientation": "landscape",
+    "gpu_vendor": "ARM",
+    "gpu_model": "Mali-G31",
+    "android_opengl_es_version": "3.2",
+    "linux_drm_hdmi_verified": false,
+    "linux_panforst_verified": false,
+    "notes": "Android-reported graphics do not prove mainline Linux display and GPU driver support"
+  }
 }
