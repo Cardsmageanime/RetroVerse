@@ -5,6 +5,7 @@ on:
       - 'interface/preview/**'
       - 'tests/test_interface_preview.py'
       - 'tests/test_gamepad.js'
+      - 'tests/test_controller_detection.js'
       - '.github/workflows/check-interface-preview.yml'
   workflow_dispatch:
 permissions:
@@ -20,4 +21,6 @@ jobs:
       - run: node --check interface/preview/app.js
       - run: node --check interface/preview/gamepad.js
       - run: node tests/test_gamepad.js
+      - run: node --check interface/preview/controller-detection.js
+      - run: node tests/test_controller_detection.js
       - run: python3 -m unittest discover -s tests -p 'test_interface_preview.py' -v
