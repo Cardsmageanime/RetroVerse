@@ -7,6 +7,8 @@ on:
       - 'boot/tests/test_external_boot_readiness.py'
       - 'boot/tools/inspect_boot_artifacts.py'
       - 'boot/tests/test_inspect_boot_artifacts.py'
+      - 'boot/tools/lint_uboot_script.py'
+      - 'boot/tests/test_lint_uboot_script.py'
       - 'hardware/profiles/vayava-franklin-2gb.json'
       - 'hardware/evidence/vayava-franklin-external-boot.json'
       - '.github/workflows/check-gamebox-readiness.yml'
@@ -16,6 +18,8 @@ on:
       - 'boot/tests/test_external_boot_readiness.py'
       - 'boot/tools/inspect_boot_artifacts.py'
       - 'boot/tests/test_inspect_boot_artifacts.py'
+      - 'boot/tools/lint_uboot_script.py'
+      - 'boot/tests/test_lint_uboot_script.py'
       - 'hardware/profiles/vayava-franklin-2gb.json'
       - 'hardware/evidence/vayava-franklin-external-boot.json'
       - '.github/workflows/check-gamebox-readiness.yml'
@@ -32,6 +36,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Unit tests
-        run: python -m unittest discover -s boot/tests -p 'test_*boot*.py' -v
+        run: python -m unittest discover -s boot/tests -p 'test_*.py' -v
       - name: Read-only evidence report
         run: python boot/tools/check_external_boot_readiness.py
