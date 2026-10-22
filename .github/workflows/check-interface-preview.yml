@@ -4,6 +4,7 @@ on:
     paths:
       - 'interface/preview/**'
       - 'tests/test_interface_preview.py'
+      - 'tests/test_gamepad.js'
       - '.github/workflows/check-interface-preview.yml'
   workflow_dispatch:
 permissions:
@@ -17,4 +18,6 @@ jobs:
         with:
           node-version: '22'
       - run: node --check interface/preview/app.js
+      - run: node --check interface/preview/gamepad.js
+      - run: node tests/test_gamepad.js
       - run: python3 -m unittest discover -s tests -p 'test_interface_preview.py' -v
