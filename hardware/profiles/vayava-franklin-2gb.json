@@ -83,5 +83,7 @@
     "sd",
     "sdio",
     "status"
-  ]
+  ],
+  "android_sd_bus_width_bits_observed": 4,
+  "android_sd_max_frequency_hz_observed": 100000000
 }
