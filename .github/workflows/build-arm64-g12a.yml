@@ -1,0 +1,38 @@
+name: RetroVerse ARM64 G12A Kernel
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make gcc-aarch64-linux-gnu bc bison flex libssl-dev libelf-dev dwarves python3 rsync
+      - name: Obtain stable Linux kernel v6.12.12
+        run: |
+          git clone --depth 1 --branch v6.12.12 https://github.com/gregkh/linux.git linux-src
+      - name: Compile ARM64 kernel, modules and DTBs
+        run: |
+          python3 kernel/scripts/build_arm64_kernel.py --linux-source "$GITHUB_WORKSPACE/linux-src" --output "$RUNNER_TEMP/rv-g12a-build" --jobs 2 --execute
+      - name: Stage modules and artifacts
+        run: |
+          make -C "$GITHUB_WORKSPACE/linux-src" O="$RUNNER_TEMP/rv-g12a-build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH="$RUNNER_TEMP/rv-modules" modules_install
+          mkdir -p kernel-output/dtbs
+          tar -C "$RUNNER_TEMP/rv-modules" -czf kernel-output/modules.tar.gz lib/modules
+          cp "$RUNNER_TEMP/rv-g12a-build/arch/arm64/boot/Image" kernel-output/Image
+          find "$RUNNER_TEMP/rv-g12a-build/arch/arm64/boot/dts/amlogic" -type f -name 'meson-g12a*.dtb' -exec cp {} kernel-output/dtbs/ \;
+          cp "$RUNNER_TEMP/rv-g12a-build/retroverse-arm64-build-manifest.json" kernel-output/build-manifest.json
+          test -s kernel-output/Image
+          test -n "$(find kernel-output/dtbs -name '*.dtb' -print -quit)"
+          sha256sum kernel-output/Image kernel-output/dtbs/*.dtb kernel-output/modules.tar.gz > kernel-output/SHA256SUMS
+      - name: Upload unverified boot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-arm64-g12a-COMPILED-NOT-BOOT-VERIFIED
+          path: kernel-output/
+          if-no-files-found: error
