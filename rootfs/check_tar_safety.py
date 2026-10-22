@@ -27,7 +27,11 @@ def validate(archive):
                 raise ValueError(f"Unsafe archive member path: {m.name}")
             name = posixpath.normpath(raw)
             if m.isdev() or m.isfifo():
-                raise ValueError(f"Unsupported device/FIFO: {m.name}")
+                # Debian rootfs contains /dev/console and similar device nodes.
+                # The integration script MUST exclude all /dev children on extraction.
+                if not name.startswith("dev/"):
+                    raise ValueError(f"Special file outside /dev: {m.name}")
+                continue
             if m.issym():
                 link = m.linkname
                 # Absolute symlinks are normal in a Linux rootfs; interpret
