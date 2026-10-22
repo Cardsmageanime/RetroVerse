@@ -66,5 +66,22 @@
     "resolution": "1920x1080",
     "refresh_hz": 60,
     "outputmode": "1080p60hz"
-  }
+  },
+  "android_amlogic_dt_id_observed": "g12a_u212_2g",
+  "android_sd_controller_properties_observed": [
+    "bus-width",
+    "cap-mmc-highspeed",
+    "cap-sd-highspeed",
+    "clock-names",
+    "clocks",
+    "compatible",
+    "disable-wp",
+    "interrupts",
+    "max-frequency",
+    "pinctrl-names",
+    "reg",
+    "sd",
+    "sdio",
+    "status"
+  ]
 }
