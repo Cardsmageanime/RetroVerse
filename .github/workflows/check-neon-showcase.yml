@@ -5,11 +5,13 @@ on:
     paths:
       - 'interface/neon-showcase/**'
       - 'interface/tests/test_neon_showcase.py'
+      - 'interface/tests/check_neon_browser.mjs'
       - '.github/workflows/check-neon-showcase.yml'
   pull_request:
     paths:
       - 'interface/neon-showcase/**'
       - 'interface/tests/test_neon_showcase.py'
+      - 'interface/tests/check_neon_browser.mjs'
       - '.github/workflows/check-neon-showcase.yml'
   workflow_dispatch:
 
@@ -28,3 +30,9 @@ jobs:
           node-version: '22'
       - name: Validate HTML sections, navigation and JavaScript syntax
         run: python interface/tests/test_neon_showcase.py
+      - name: Install Chromium browser test dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Execute interactive Chromium UI tests
+        run: node interface/tests/check_neon_browser.mjs
