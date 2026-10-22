@@ -43,13 +43,13 @@
   "android_boot_hardware_observed": "amlogic",
   "android_proc_cmdline_access": "permission-denied (ADB shell)",
   "android_ro_boot_bootloader_observed": "U-Boot",
-  "android_device_tree_memory_path_observed": "missing: /proc/device-tree/memory",
+  "android_device_tree_memory_path_observed": "memory@00000000",
   "android_device_tree_storage_controllers_observed": {
     "sd1@ffe05000": "disabled",
     "sd2@ffe05000": "okay",
     "sdio@ffe03000": "disabled"
   },
-  "external_sd_controller_identified": false,
+  "external_sd_controller_identified": true,
   "android_sd_card_observed": {
     "block_device": "mmcblk1",
     "host": "sd",
@@ -85,5 +85,13 @@
     "status"
   ],
   "android_sd_bus_width_bits_observed": 4,
-  "android_sd_max_frequency_hz_observed": 100000000
+  "android_sd_max_frequency_hz_observed": 100000000,
+  "storage_validation": {
+    "windows_reader_256mib_sha256_readback": "passed",
+    "windows_chkdsk": "filesystem-clean",
+    "windows_error_log": "no-matching-errors-in-queried-window",
+    "gamebox_mmc_cmd18_crc_errors": "observed",
+    "gamebox_mmc_reliability_verified": false,
+    "full_card_integrity_verified": false
+  }
 }
