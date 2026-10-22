@@ -1,0 +1,12 @@
+#!/bin/sh
+# Minimal ARM64 bring-up shell. Not a full RetroVerse user interface.
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+/bin/mount -t proc proc /proc
+/bin/mount -t sysfs sysfs /sys
+/bin/mount -t devtmpfs devtmpfs /dev 2>/dev/null || /bin/mount -t tmpfs tmpfs /dev
+/bin/mkdir -p /dev/pts /run
+/bin/mount -t devpts devpts /dev/pts 2>/dev/null || true
+/bin/echo "RetroVerse ARM64 early userspace (diagnostic build)"
+/bin/echo "No disk writes will be performed. Boot compatibility is NOT verified."
+/bin/uname -a
+exec /bin/sh </dev/console >/dev/console 2>&1
