@@ -21,6 +21,8 @@ def validate(archive):
         symlinks = {}
         for m in members:
             raw = m.name.removeprefix("./")
+            if raw in ("", ".") and m.isdir():
+                continue  # Standard root directory entry emitted by tar -C rootfs .
             if not raw or raw.startswith("/") or ".." in PurePosixPath(raw).parts or not inside_root(raw):
                 raise ValueError(f"Unsafe archive member path: {m.name}")
             name = posixpath.normpath(raw)
