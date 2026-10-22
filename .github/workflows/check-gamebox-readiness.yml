@@ -1,0 +1,33 @@
+name: Check GameBox external boot readiness
+
+on:
+  push:
+    paths:
+      - 'boot/tools/check_external_boot_readiness.py'
+      - 'boot/tests/test_external_boot_readiness.py'
+      - 'hardware/profiles/vayava-franklin-2gb.json'
+      - 'hardware/evidence/vayava-franklin-external-boot.json'
+      - '.github/workflows/check-gamebox-readiness.yml'
+  pull_request:
+    paths:
+      - 'boot/tools/check_external_boot_readiness.py'
+      - 'boot/tests/test_external_boot_readiness.py'
+      - 'hardware/profiles/vayava-franklin-2gb.json'
+      - 'hardware/evidence/vayava-franklin-external-boot.json'
+      - '.github/workflows/check-gamebox-readiness.yml'
+  workflow_dispatch:
+
+jobs:
+  inspect-without-flashing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests
+        run: python -m unittest discover -s boot/tests -p 'test_external_boot_readiness.py' -v
+      - name: Read-only evidence report
+        run: python boot/tools/check_external_boot_readiness.py
