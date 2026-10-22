@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==="object"&&module.exports)module.exports=api;root.RetroVerseMusic=api;})(typeof globalThis!=="undefined"?globalThis:this,function(){
 "use strict";
 function shuffledIndices(count,random=Math.random){const result=Array.from({length:count},(_,i)=>i);for(let i=count-1;i>0;i--){const j=Math.max(0,Math.min(i,Math.floor(random()*(i+1))));[result[i],result[j]]=[result[j],result[i]];}return result;}
-function soundtrack(name){const s=String(name||"").toLowerCase();if(s.includes("mecha yokai"))return "mecha";if(s.includes("cosmic oblivion"))return "cosmic";return "other";}
+function soundtrack(name){const s=String(name||"").toLowerCase();if(s.includes("mecha yokai"))return "mecha";if(s.includes("cosmic oblivion"))return "cosmic";if(s.includes("astral visit"))return "astral";return "other";}
 function eligible(files,selection="all"){if(selection==="off")return [];return files.map((f,i)=>({f,i})).filter(({f})=>selection==="all"||soundtrack(f.name)===selection).map(({i})=>i);}
 class Queue{
  constructor(random=Math.random){this.random=random;this.items=[];this.pending=[];this.last=null;this.shuffle=true;}
