@@ -1,0 +1,21 @@
+name: RetroVerse Boot Foundation Checks
+on:
+  push:
+    paths:
+      - 'boot/**'
+      - 'tests/**'
+      - '.github/workflows/check-boot-foundation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run external boot staging safety tests
+        run: python3 -m unittest discover -s tests -p 'test_external_boot_staging.py' -v
+      - name: Check Python syntax
+        run: |
+          python3 -m py_compile boot/tools/stage_external_boot.py
+          python3 -m py_compile tests/test_external_boot_staging.py
