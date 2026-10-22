@@ -1,0 +1,30 @@
+name: Verify RetroVerse Neon Showcase
+
+on:
+  push:
+    paths:
+      - 'interface/neon-showcase/**'
+      - 'interface/tests/test_neon_showcase.py'
+      - '.github/workflows/check-neon-showcase.yml'
+  pull_request:
+    paths:
+      - 'interface/neon-showcase/**'
+      - 'interface/tests/test_neon_showcase.py'
+      - '.github/workflows/check-neon-showcase.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate HTML sections, navigation and JavaScript syntax
+        run: python interface/tests/test_neon_showcase.py
