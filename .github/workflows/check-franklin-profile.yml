@@ -1,0 +1,16 @@
+name: RetroVerse Franklin Hardware Profile Checks
+on:
+  push:
+    paths:
+      - 'hardware/profiles/vayava-franklin-2gb.json'
+      - 'hardware/tests/check_franklin_profile.py'
+      - '.github/workflows/check-franklin-profile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 hardware/tests/check_franklin_profile.py
