@@ -1,0 +1,27 @@
+name: Verify RetroArch Netplay Bridge
+
+on:
+  push:
+    paths:
+      - 'online/retroarch/**'
+      - '.github/workflows/check-retroarch-netplay.yml'
+  pull_request:
+    paths:
+      - 'online/retroarch/**'
+      - '.github/workflows/check-retroarch-netplay.yml'
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile RetroArch bridge
+        run: python -m py_compile online/retroarch/netplay_bridge.py
+      - name: Verify host join spectator commands and invalid input
+        run: python -m unittest discover -s online/retroarch -p 'test_*.py' -v
