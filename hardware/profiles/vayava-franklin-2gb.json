@@ -1,0 +1,25 @@
+{
+  "profile_id": "vayava-franklin-2gb-candidate",
+  "status": "hardware-observed-boot-unverified",
+  "manufacturer": "Amlogic",
+  "android_model": "TVBOX-GAME",
+  "android_board": "franklin",
+  "cpu": {
+    "cores": 4,
+    "microarchitecture": "Cortex-A53",
+    "max_mhz": 1800,
+    "arm64_capable": true,
+    "android_userspace_bits": 32
+  },
+  "ram_mb_reported": 2007,
+  "soc_candidate": "Amlogic G12A / S905X2 (unconfirmed)",
+  "kernel_arch": "arm64",
+  "legacy_dtb_reference": "g12a_s905x2_2g.dtb",
+  "boot_chain_verified": false,
+  "external_sd_boot_verified": false,
+  "dtb_kernel_match_verified": false,
+  "permissions": {
+    "flash_internal_storage": false
+  },
+  "source": "user-supplied AIDA64 photographs"
+}
