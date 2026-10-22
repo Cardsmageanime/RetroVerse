@@ -4,5 +4,11 @@
   "board_dtb_matches_compiled_kernel": false,
   "external_uboot_boot_path_verified": false,
   "android_internal_storage_untouched": false,
-  "notes": "These gates require physical evidence; never set true from a GitHub Actions build alone."
+  "notes": "Windows 256 MiB write/read SHA-256 hashes matched; Windows filesystem check passed. Android dmesg showed SD CMD18 CRC errors in an isolated observed burst. Neither proves full-card health or board-side reliability. U-Boot SD boot and matching mainline DTB remain unverified; no physical RetroVerse boot attempted. internal_storage_untouched=false means absence of a complete independent verification, not evidence of modification.",
+  "windows_hash_readback_passed": true,
+  "windows_hash_readback_test_bytes": 268435456,
+  "windows_filesystem_check_passed": true,
+  "gamebox_sd_link_reliability_verified": false,
+  "gamebox_sd_crc_errors_observed": true,
+  "windows_full_capacity_card_integrity_verified": false
 }
