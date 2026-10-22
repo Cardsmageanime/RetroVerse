@@ -1,0 +1,16 @@
+name: RetroVerse Online Protocol Checks
+on:
+  push:
+    paths:
+      - 'online/**'
+      - 'tests/test_online_protocol.py'
+      - '.github/workflows/check-online-protocol.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_online_protocol.py' -v
