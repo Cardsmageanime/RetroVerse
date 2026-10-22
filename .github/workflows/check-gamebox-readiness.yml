@@ -9,6 +9,8 @@ on:
       - 'boot/tests/test_inspect_boot_artifacts.py'
       - 'boot/tools/lint_uboot_script.py'
       - 'boot/tests/test_lint_uboot_script.py'
+      - 'boot/tools/plan_franklin_uboot.py'
+      - 'boot/tests/test_plan_franklin_uboot.py'
       - 'hardware/profiles/vayava-franklin-2gb.json'
       - 'hardware/evidence/vayava-franklin-external-boot.json'
       - '.github/workflows/check-gamebox-readiness.yml'
@@ -20,6 +22,8 @@ on:
       - 'boot/tests/test_inspect_boot_artifacts.py'
       - 'boot/tools/lint_uboot_script.py'
       - 'boot/tests/test_lint_uboot_script.py'
+      - 'boot/tools/plan_franklin_uboot.py'
+      - 'boot/tests/test_plan_franklin_uboot.py'
       - 'hardware/profiles/vayava-franklin-2gb.json'
       - 'hardware/evidence/vayava-franklin-external-boot.json'
       - '.github/workflows/check-gamebox-readiness.yml'
@@ -37,5 +41,7 @@ jobs:
           python-version: '3.12'
       - name: Unit tests
         run: python -m unittest discover -s boot/tests -p 'test_*.py' -v
+      - name: Non-deployable U-Boot plan report
+        run: python boot/tools/plan_franklin_uboot.py
       - name: Read-only evidence report
         run: python boot/tools/check_external_boot_readiness.py
