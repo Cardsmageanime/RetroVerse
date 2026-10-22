@@ -1,0 +1,59 @@
+name: RetroVerse Combined Diagnostic Boot Package
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain known successful kernel and initramfs artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p inputs/kernel inputs/initramfs
+          gh run download 39717680785 --repo "${GITHUB_REPOSITORY}" --dir inputs/kernel
+          gh run download 39745766212 --repo "${GITHUB_REPOSITORY}" --dir inputs/initramfs
+          find inputs -type f -printf '%p %s bytes\n'
+      - name: Select G12A diagnostic reference DTB
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          kernel=Path("inputs/kernel")
+          init=Path("inputs/initramfs")
+          images=list(kernel.rglob("Image"))
+          dtbs=sorted(kernel.rglob("meson-g12a*.dtb"))
+          archives=list(init.rglob("RetroVerse-ARM64-DIAGNOSTIC-initramfs.cpio.gz"))
+          assert len(images)==1,(images)
+          assert dtbs, "Kernel artifact has no G12A DTBs"
+          assert len(archives)==1,(archives)
+          # This DTB is illustrative only; NOT validated for Vayava hardware.
+          reference=next((x for x in dtbs if "u200" in x.name), dtbs[0])
+          out=Path("selected")
+          out.mkdir()
+          shutil.copy2(images[0],out/"Image")
+          shutil.copy2(reference,out/"reference-g12a.dtb")
+          shutil.copy2(archives[0],out/"initramfs.cpio.gz")
+          (out/"DTB_SOURCE.txt").write_text(str(reference)+"\n")
+          PY
+      - name: Stage external boot directory
+        run: |
+          python3 boot/tools/stage_external_boot.py --kernel selected/Image --dtb selected/reference-g12a.dtb --initramfs selected/initramfs.cpio.gz --output package
+          python3 boot/tools/validate_external_boot.py package
+          cp selected/DTB_SOURCE.txt package/
+          cat > package/DO_NOT_FLASH.txt <<'TXT'
+          DIAGNOSTIC STRUCTURAL VALIDATION ONLY.
+          Not a bootable SD image. Contains no verified GameBox bootloader.
+          The reference G12A DTB is NOT confirmed compatible with Vayava GameBox.
+          Do NOT flash this package or replace internal Android.
+          TXT
+      - name: Upload unverified combined diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-arm64-COMBINED-DIAGNOSTIC-DO-NOT-FLASH
+          path: package/
+          if-no-files-found: error
