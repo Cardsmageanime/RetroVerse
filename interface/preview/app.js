@@ -16,12 +16,36 @@ function select(){const active=document.activeElement;if(!controls().includes(ac
 function act(action){if(action==="up"||action==="left")move(-1);else if(action==="down"||action==="right")move(1);else if(action==="back")goBack();else if(action==="select")select();}
 document.addEventListener("keydown",e=>{const keys={ArrowDown:"down",ArrowRight:"right",ArrowUp:"up",ArrowLeft:"left",Escape:"back"};if(keys[e.key]){e.preventDefault();act(keys[e.key]);}});
 const controller=new RetroVerseGamepad.Controller();
-let previousPad=null;
-function loop(now){const pads=navigator.getGamepads?[...navigator.getGamepads()]:[];const pad=pads.find(p=>p&&p.mapping==="standard")||pads.find(Boolean)||null;
-if(pad&&!previousPad)document.getElementById("notice").textContent="Controller connected";
-if(!pad&&previousPad)document.getElementById("notice").textContent="Controller disconnected";
-previousPad=!!pad;for(const event of controller.update(pad,now))act(event);
-requestAnimationFrame(loop);}
+const registry=new RetroVerseDetection.Registry();
+let previousSignature="";
+function renderControllers(result){
+ const status=document.getElementById("controller-status");
+ const list=document.getElementById("controller-list");
+ if(!status||!list)return;
+ status.textContent=result.controllers.length?result.controllers.length+" controller(s) detected":"No controller detected. Connect a gamepad and press a button.";
+ list.replaceChildren();
+ for(const item of result.controllers){
+  const button=document.createElement("button");
+  button.className="nav";
+  button.textContent=(item.index===result.active?"● ":"○ ")+item.name+" ("+item.mapping+")";
+  button.setAttribute("aria-pressed",String(item.index===result.active));
+  button.addEventListener("click",()=>{registry.select(item.index,navigator.getGamepads?.()||[]);previousSignature="";});
+  list.appendChild(button);
+ }
+}
+
+function loop(now){
+ const pads=navigator.getGamepads?[...navigator.getGamepads()]:[];
+ const result=registry.update(pads);
+ const signature=JSON.stringify({active:result.active,controllers:result.controllers});
+ if(signature!==previousSignature){
+  renderControllers(result);
+  document.getElementById("notice").textContent=result.controllers.length?"Controller detected: "+result.controllers.find(x=>x.index===result.active)?.name:"Controller disconnected";
+  previousSignature=signature;
+ }
+ for(const event of controller.update(result.pad,now))act(event);
+ requestAnimationFrame(loop);
+}
 open("home");
 if(typeof requestAnimationFrame==="function")requestAnimationFrame(loop);
 })();
