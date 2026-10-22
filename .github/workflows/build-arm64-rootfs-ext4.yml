@@ -1,6 +1,10 @@
 name: RetroVerse ARM64 Rootfs ext4 Integration
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'rootfs/**'
+      - '.github/workflows/build-arm64-rootfs-ext4.yml'
 permissions:
   contents: read
   actions: read
