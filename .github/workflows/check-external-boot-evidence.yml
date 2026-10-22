@@ -1,0 +1,22 @@
+name: RetroVerse External Boot Evidence Gate
+on:
+  push:
+    paths:
+      - 'hardware/**'
+      - 'tests/test_external_boot_evidence.py'
+      - '.github/workflows/check-external-boot-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate that unverified hardware remains blocked
+        run: python3 -m unittest discover -s tests -p test_external_boot_evidence.py -v
+      - name: Publish current evidence gate summary
+        run: |
+          python3 hardware/tests/check_external_boot_evidence.py \
+            --profile hardware/profiles/vayava-franklin-2gb.json \
+            --evidence hardware/evidence/vayava-franklin-external-boot.json || test "$?" -eq 2
