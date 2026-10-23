@@ -4,7 +4,9 @@
 set -eu
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/../.." && pwd)
-PAGE="$ROOT/interface/neon-showcase/index.html"
+PAGE="$ROOT/interface/title-screen/index.html"
+# Keep the title screen as the first interactive page. The Neon Showcase remains
+# reachable after selecting Start or Offline Mode.
 if [ ! -r "$PAGE" ]; then
   echo "RetroVerse UI missing: $PAGE" >&2
   exit 1
