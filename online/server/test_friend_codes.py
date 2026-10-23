@@ -27,6 +27,7 @@ class FriendCodeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue((await self.call("bob","friend_accept",name="Alice"))["ok"])
         room=(await self.call("alice","create",name="Friends",kind="friends"))["room"]
         self.assertEqual((await self.call("alice","invite"))["error"],"friend_invite_required")
+        self.assertTrue((await self.call("alice","chat",text="Welcome friends"))["ok"])
         self.assertEqual((await self.call("guest","hello",name="Visitor"))["ok"],True)
         self.assertEqual((await self.call("guest","join",room=room))["error"],"access_denied")
         self.assertEqual((await self.call("bob","join",room=room))["error"],"access_denied")
