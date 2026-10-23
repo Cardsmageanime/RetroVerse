@@ -19,6 +19,7 @@ from netplay_bridge import build_command
 ROOT = Path(__file__).resolve().parents[2]
 NEON = ROOT / "interface" / "neon-showcase" / "index.html"
 NETPLAY = Path(__file__).with_name("netplay.html")
+DIAGNOSTICS = Path(__file__).with_name("gamepad_diagnostics.js")
 MAX_REQUEST = 4096
 
 def prepare(data):
@@ -45,7 +46,7 @@ def handler_factory(token, port):
             self.send_header("Content-Length", str(len(raw)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'")
+            self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'")
             self.end_headers()
             self.wfile.write(raw)
 
@@ -62,6 +63,8 @@ def handler_factory(token, port):
                 page = NEON
             elif path == "/netplay":
                 page = NETPLAY
+            elif path == "/gamepad-diagnostics.js":
+                page = DIAGNOSTICS
             else:
                 self._json(404, {"ok": False, "error": "not_found"})
                 return
@@ -69,7 +72,7 @@ def handler_factory(token, port):
             if path == "/netplay":
                 # Session token only readable by local browser page.
                 text = text.replace("<script>\n(()=>", "<script>window.RETROVERSE_SESSION_TOKEN=" + json.dumps(token) + ";</script><script>\n(()=>", 1)
-            self._send(200, text.encode(), "text/html; charset=utf-8")
+            self._send(200, text.encode(), "application/javascript; charset=utf-8" if path == "/gamepad-diagnostics.js" else "text/html; charset=utf-8")
 
         def do_POST(self):
             if self.path not in ("/api/netplay/preview", "/api/netplay/launch"):
