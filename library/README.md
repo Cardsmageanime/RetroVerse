@@ -11,3 +11,20 @@ If Chromium and Python 3 are installed, the launcher starts a **loopback-only** 
 The UI's index currently lists titles and system labels; an emulator launcher, artwork, richer metadata, native drive selection, and a full bootable ARM image are future milestones.
 
 Do not use the server on untrusted networks or expose its port. The local server listens on 127.0.0.1, not 0.0.0.0.
+
+
+## Removable drive discovery (Linux preview)
+
+The new optional `library/removable_discovery.py` utility lists candidate `roms` / `ROMS` / `games` / `GAMES` folders on **already-mounted removable drives** under `/media`, `/run/media`, or `/mnt`:
+
+```sh
+python3 library/removable_discovery.py
+```
+
+This is discovery only: it does not mount, scan, index, or select a drive. It reads Linux `lsblk` metadata. Review a candidate and **explicitly select it** before launching RetroVerse:
+
+```sh
+RETROVERSE_ROM_ROOT="/media/user/USB/roms" sh boot/tools/launch_neon_arm.sh
+```
+
+No internal Android partition is intentionally discovered. Real hardware and atypical Linux device topology require testing; do not assume every listed mount is safe without user approval. Cover art and metadata are not implemented by this milestone.
