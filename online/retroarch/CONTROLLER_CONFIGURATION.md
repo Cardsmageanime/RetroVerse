@@ -33,3 +33,13 @@ py online/retroarch/netplay_bridge.py host --retroarch retroarch --core "C:\\Ret
 Use `--dry-run` first. The bridge validates both player configurations before launching, creates a temporary overlay only for this RetroArch session, and deletes it when RetroArch exits normally. **It does not edit your regular retroarch.cfg.** Avoid running multiple sessions from one shared config until tested, and leave RetroArch's `Save Configuration on Exit` disabled if you want no persistent changes. The launcher is a blocking CLI process; the local web Netplay panel is not yet wired to this controller-profile option.
 
 Note: **The JSON joypad indices and button indices must correspond to RetroArch on the target device, not automatically to browser Gamepad API indices.** PlayStation/Xbox/Switch browser presets have not been translated into confirmed native RetroArch device-specific mappings. Real controller behavior needs verification.
+
+## Visual two-player Netplay controller panel
+
+The local Netplay panel at `http://127.0.0.1:8768/netplay` now includes an **optional** Player 1 / Player 2 assignment section. Enable it and choose distinct RetroArch joypad indices, plus each player's A-button index. Use **Validate & Preview** to inspect the generated controller overlay before approving **Launch RetroArch**.
+
+The local server keeps this overlay in a unique temporary directory until the RetroArch subprocess exits, then removes the directory. No `retroarch.cfg` file is overwritten by this implementation. RetroArch itself can have separate settings that save on exit, so turn off its **Save Configuration on Exit** option when testing and back up its settings.
+
+This first visual integration sets controller indices and A-button bindings only; the standalone JSON exporter still supports the wider set of RetroArch button mappings. The displayed Xbox, PlayStation, and Switch choices are **browser-standard suggestions**, not detected native RetroArch autoconfig hardware mappings. The operator must confirm indices in the actual RetroArch Input settings.
+
+No real gamepad compatibility or physical GameBox test has yet been demonstrated.
