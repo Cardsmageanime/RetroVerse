@@ -103,6 +103,11 @@ class HTTPTests(unittest.TestCase):
                                     token=self.token, host="untrusted.example")
         self.assertEqual(status, 403)
 
+    def test_untrusted_host_cannot_read_session_page(self):
+        status, body = self.request('/netplay', method='GET', host='untrusted.example')
+        self.assertEqual(status, 403)
+        self.assertNotIn(self.token.encode(), body)
+
     def test_invalid_game_rejected(self):
         self.payload["content"] = "/missing-game.rom"
         status, body = self.request("/api/netplay/preview", self.payload, token=self.token)
