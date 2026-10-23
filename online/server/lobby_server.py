@@ -338,6 +338,19 @@ class LobbyServer:
                 return {"ok": True, "invite": new_invite(self.rooms[rid], token)}
             except PermissionError:
                 return {"ok": False, "error": "host_only"}
+        if action == "invite_revoke":
+            rid = client["room"]
+            if not rid or rid not in self.rooms:
+                return {"ok": False, "error": "not_in_room"}
+            room = self.rooms[rid]
+            if room["owner"] != token:
+                return {"ok": False, "error": "host_only"}
+            ticket = msg.get("invite")
+            if not isinstance(ticket, str) or ticket not in room["invites"]:
+                return {"ok": False, "error": "invite_not_found"}
+            room["invites"].remove(ticket)
+            room.get("invite_targets", {}).pop(ticket, None)
+            return {"ok": True, "revoked": True}
         if action == "join":
             rid = msg.get("room")
             if not isinstance(rid, str) or rid not in self.rooms:
