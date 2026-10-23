@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'interface/title-screen/**'
+      - 'boot/tools/launch_neon_arm.sh'
       - '.github/workflows/check-title-screen.yml'
   workflow_dispatch:
 jobs:
@@ -15,3 +16,7 @@ jobs:
           node-version: '22'
       - name: Verify title menu and navigation
         run: node interface/title-screen/test_title_screen.cjs
+      - name: Validate title-first graphical launcher
+        run: |
+          sh -n boot/tools/launch_neon_arm.sh
+          grep -F 'interface/title-screen/index.html' boot/tools/launch_neon_arm.sh
