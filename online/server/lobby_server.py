@@ -87,13 +87,14 @@ class LobbyServer:
         """Audit only an allowlisted outcome; never retain submitted credentials."""
         action=msg.get("action")
         before=self.sessions.user(token)
+        pending_before=self.clients[token].get("pending_pin") or self.clients[token].get("pending_totp")
         result=await self._dispatch(token,msg)
         after=self.sessions.user(token)
         event=None
         if action == "login":
             if result.get("error") == "invalid_credentials": event="login_failed"
             elif result.get("error") == "login_throttled": event="login_throttled"
-            elif result.get("ok"): event="login_success"
+            elif result.get("authenticated") is True: event="login_success"
         elif action == "register" and result.get("ok"): event="register_success"
         elif action == "logout" and before is not None: event="logout"
         elif action == "pin_setup" and result.get("ok"): event="pin_enabled"
@@ -101,12 +102,13 @@ class LobbyServer:
         elif action == "recovery_create" and result.get("ok"): event="recovery_rotated"
         elif action in ("pin_verify","totp_verify","recovery_verify"):
             if result.get("error") == "factor_throttled": event="factor_throttled"
+            elif result.get("authenticated") is True: event="login_success"
             elif result.get("ok"): event="factor_success"
             elif result.get("error") in ("pin_invalid","pin_attempts_exhausted","totp_invalid","totp_attempts_exhausted","recovery_invalid","recovery_attempts_exhausted"): event="factor_failed"
         if event:
             uid=after or before
             if uid is None and action in ("pin_verify","totp_verify","recovery_verify"):
-                pending=self.clients[token].get("pending_pin") or self.clients[token].get("pending_totp")
+                pending=pending_before
                 if pending: uid=pending[0]
             if uid is None and action=="login":
                 uid=self.accounts.find(msg.get("name"))
