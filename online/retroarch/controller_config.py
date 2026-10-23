@@ -10,6 +10,7 @@ from pathlib import Path
 
 BUTTONS = ("a", "b", "x", "y", "start", "select", "l", "r",
            "up", "down", "left", "right", "l2", "r2", "l3", "r3")
+AXES = ("l_x", "l_y", "r_x", "r_y")
 DEFAULTS = {"a": 1, "b": 0, "x": 3, "y": 2, "start": 9, "select": 8,
             "l": 4, "r": 5, "l2": 6, "r2": 7, "l3": 10, "r3": 11,
             "up": 12, "down": 13, "left": 14, "right": 15}
@@ -17,7 +18,7 @@ DEFAULTS = {"a": 1, "b": 0, "x": 3, "y": 2, "start": 9, "select": 8,
 def validate_player(config):
     if not isinstance(config, dict):
         raise ValueError("Player configuration must be an object")
-    if set(config) - {"joypad_index", "buttons"}:
+    if set(config) - {"joypad_index", "buttons", "axes"}:
         raise ValueError("Unknown player fields")
     index = config.get("joypad_index")
     if type(index) is not int or not 0 <= index <= 15:
@@ -28,7 +29,15 @@ def validate_player(config):
     for key, value in buttons.items():
         if type(value) is not int or not 0 <= value <= 63:
             raise ValueError("Invalid button index for " + key)
-    return index, buttons
+    axes = config.get("axes", {})
+    if not isinstance(axes, dict) or set(axes) - set(AXES):
+        raise ValueError("Invalid analog axis assignments")
+    for key, value in axes.items():
+        if type(value) is not int or not 0 <= value <= 31:
+            raise ValueError("Invalid analog axis index for " + key)
+    if len(set(axes.values())) != len(axes):
+        raise ValueError("Analog axes must use distinct indices for each player")
+    return index, buttons, axes
 
 def generate(players):
     if not isinstance(players, list) or len(players) != 2:
@@ -39,11 +48,15 @@ def generate(players):
     lines = ["# RetroVerse generated controller bindings; review before use.",
              "# Standalone snippet only. Does NOT change existing RetroArch settings.",
              "# Joypad indices may differ from browser Gamepad API indices."]
-    for player, (index, buttons) in enumerate(parsed, 1):
+    for player, (index, buttons, axes) in enumerate(parsed, 1):
         lines += ["", f"input_player{player}_joypad_index = \"{index}\""]
         for name in BUTTONS:
             if name in buttons:
                 lines.append(f"input_player{player}_{name}_btn = \"{buttons[name]}\"")
+        for name in AXES:
+            if name in axes:
+                lines.append(f'input_player{player}_{name}_plus_axis = "+{axes[name]}"')
+                lines.append(f'input_player{player}_{name}_minus_axis = "-{axes[name]}"')
     return "\n".join(lines) + "\n"
 
 def main():
