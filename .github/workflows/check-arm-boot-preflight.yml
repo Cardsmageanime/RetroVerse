@@ -1,0 +1,23 @@
+name: Check ARM Boot Reference Preflight
+on:
+  push:
+    paths:
+      - 'boot/tools/inspect_boot_reference.py'
+      - 'boot/tools/test_inspect_boot_reference.py'
+      - 'boot/BOOT_REFERENCE_PREFLIGHT.md'
+      - '.github/workflows/check-arm-boot-preflight.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check boot-reference inspection
+        run: |
+          python -m py_compile boot/tools/inspect_boot_reference.py
+          python -m unittest discover -s boot/tools -p 'test_inspect_boot_reference.py' -v
