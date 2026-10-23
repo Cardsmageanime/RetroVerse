@@ -29,6 +29,8 @@ def evaluate(profile, evidence):
     for gate in REQUIRED_GATES:
         if evidence.get(gate) is not True:
             findings.append("Required boot evidence not verified: " + gate)
+    if evidence.get("android_internal_storage_untouched") is not True:
+        findings.append("Internal storage preservation not verified: android_internal_storage_untouched")
     for gate in STORAGE_GATES:
         if evidence.get(gate) is not True:
             findings.append("Storage evidence not verified: " + gate)
