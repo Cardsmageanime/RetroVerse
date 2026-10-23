@@ -8,9 +8,9 @@
   "board_dtb_matches_compiled_kernel": false,
   "external_uboot_boot_path_verified": true,
   "external_uboot_boot_path_scope": "A vendor recovery/reset-triggered external boot reached EmuELEC and EmulationStation. Exact U-Boot commands, MMC numbering, and load addresses remain unobserved.",
-  "android_internal_storage_untouched": false,
-  "android_fallback_after_media_removal_verified": false,
-  "notes": "On 2026-10-23, the owner completed a physical external-media boot of the existing EmuELEC installation on the Vayava/Franklin box. HDMI video, the EmuELEC splash, EmulationStation collection loading, the frontend, a RetroArch/libretro launch path, Cannonball display-calibration UI, the Abuse title screen, active game control, HDMI audio, and a repeat external boot without holding Reset were observed. This verifies a compatible reference OS external boot and gameplay path; it is not proof that a RetroVerse-built kernel, DTB, initramfs, or root filesystem boots. android_internal_storage_untouched=false records that fallback to Android after media removal has not yet been independently verified, not evidence of modification.",
+  "android_internal_storage_untouched": true,
+  "android_fallback_after_media_removal_verified": true,
+  "notes": "On 2026-10-23, the owner completed a physical external-media boot of the existing EmuELEC installation on the Vayava/Franklin box. HDMI video, the EmuELEC splash, EmulationStation collection loading, the frontend, a RetroArch/libretro launch path, Cannonball display-calibration UI, the Abuse title screen, active game control, HDMI audio, a repeat external boot without holding Reset, clean shutdown, media removal, and normal Android fallback were observed. This verifies a compatible reference OS external boot, gameplay path, and reversible external-media behavior without an observed internal-storage change; it is not proof that a RetroVerse-built kernel, DTB, initramfs, or root filesystem boots.",
   "reference_os_boot": {
     "verified": true,
     "observed_date": "2026-10-23",
@@ -31,7 +31,7 @@
       "input_driver_found": "udev",
       "libretro_core_loaded": "cannonball_libretro.so",
       "launch_path_reached": true,
-      "gameplay_verified": false,
+      "gameplay_verified": true,
       "cannonball_calibration_ui_reached": true
     },
     "controller_function_verified": true,
@@ -44,7 +44,9 @@
       "active_gameplay_verified": true
     },
     "gameplay_verified": true,
-    "repeat_boot_without_reset_verified": true
+    "repeat_boot_without_reset_verified": true,
+    "clean_shutdown_verified": true,
+    "android_fallback_after_media_removal_verified": true
   },
   "windows_hash_readback_passed": true,
   "windows_hash_readback_test_bytes": 268435456,
@@ -52,5 +54,6 @@
   "linux_image_checksums_verified": true,
   "gamebox_sd_link_reliability_verified": false,
   "gamebox_sd_crc_errors_observed": true,
-  "windows_full_capacity_card_integrity_verified": false
+  "windows_full_capacity_card_integrity_verified": false,
+  "android_fallback_boot_observed_date": "2026-10-23"
 }
