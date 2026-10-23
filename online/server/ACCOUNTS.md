@@ -33,3 +33,11 @@ GitHub Actions automatically runs these tests via **Check Online and ARM UI Foun
 A production online network requires authenticated transport (TLS), session management, sensible rate limits, safe password storage parameters and migration strategy, privacy/moderation protections, secure account recovery and MFA, production database deployment, and explicit authorization across *all* legacy room APIs. In particular guest `hello` and bearer `invite` are retained only for isolated local testing.
 
 No games are streamed or synchronized by these services. RetroArch is a separate optional emulator/network gameplay backend. RetroVerse's own public, friends, creator/host and spectator lobby services remain the owning layer.
+
+## Session security milestone
+
+Registered logins now get a per-connection, cryptographically random session with a 30-minute lifetime (measured on a monotonic clock). The session is held in server memory and is never persisted or sent as an API credential. The `session_status` action returns whether the current connection is authenticated. The `logout` action revokes the current session, leaves any room, and clears that connection's identity.
+
+When an authenticated session expires, its client identity and room participation are cleared on the next request; host rooms are closed as needed. Account-specific friends and invitations require a currently valid session. The legacy guest `hello` action cannot rename a currently authenticated session.
+
+Run `python -m unittest discover -s online/server -p 'test_*.py' -v` to validate the session lifecycle. These are development-only sessions bound to the live local connection, **not a secure remotely accessible authentication protocol**. MFA, TLS, account recovery, throttling, public service deployment, and removing legacy guest authorization remain future work.
