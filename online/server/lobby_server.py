@@ -13,6 +13,7 @@ from accounts import Accounts
 from sessions import SessionRegistry
 from pin_auth import PinStore
 from totp_auth import TotpStore
+from recovery_codes import RecoveryStore
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -24,6 +25,7 @@ class LobbyServer:
         self.sessions = SessionRegistry()
         self.pins = PinStore(self.accounts.db)
         self.totp = TotpStore(self.accounts.db)
+        self.recovery = RecoveryStore(self.accounts.db)
         self.rooms = {}
         self.clients = {}
 
@@ -109,6 +111,33 @@ class LobbyServer:
             if not self.totp.confirm(uid,msg.get("code")):
                 return {"ok":False,"error":"totp_confirmation_failed"}
             return {"ok":True,"totp_enabled":True}
+        if action == "recovery_create":
+            uid=self.sessions.user(token)
+            if uid is None:return {"ok":False,"error":"login_required"}
+            if not self.totp.enabled(uid):
+                return {"ok":False,"error":"totp_required"}
+            # A sensitive rotation; password proof is required even on an authenticated session.
+            username=client.get("name")
+            if self.accounts.authenticate(username,msg.get("password"))!=uid:
+                return {"ok":False,"error":"reauth_required"}
+            values=self.recovery.create(uid)
+            return {"ok":True,"codes":values,"remaining":len(values)}
+        if action == "recovery_verify":
+            pending=client.get("pending_totp")
+            if pending is None:return {"ok":False,"error":"recovery_not_pending"}
+            uid,name,attempts=pending
+            if not self.recovery.use(uid,msg.get("code")):
+                attempts+=1
+                client["pending_totp"]=(uid,name,attempts) if attempts<3 else None
+                return {"ok":False,"error":"recovery_invalid" if attempts<3 else "recovery_attempts_exhausted"}
+            client["pending_totp"]=None
+            if self.pins.enabled(uid):
+                client["pending_pin"]=(uid,name,0)
+                return {"ok":True,"authenticated":False,"pin_required":True}
+            client["name"]=name
+            client["user_id"]=uid
+            self.sessions.create(token,uid)
+            return {"ok":True,"authenticated":True,"name":name}
         if action == "totp_verify":
             pending=client.get("pending_totp")
             if pending is None:return {"ok":False,"error":"totp_not_pending"}
