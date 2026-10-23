@@ -59,3 +59,9 @@ The local RetroVerse account service now implements RFC 6238-style six-digit aut
 After password login, `totp_required` signals that a code is needed. Submit `{"action":"totp_verify","code":"123456"}` on the same connection. Three failed attempts cancel the challenge. If a separate PIN was previously enabled, PIN verification is required afterward. Codes are verified locally; no SMS service is integrated.
 
 Secrets are stored in local SQLite without at-rest encryption. This is **not deployable internet MFA**: HTTPS/TLS, encrypted secrets, enrollment confirmation, password-rate limiting, recovery, trusted devices, and operational controls remain necessary. The tests use a synthetic clock and do not prove live phone-app compatibility.
+
+## Confirmed TOTP enrollment milestone
+
+TOTP enrollment is now **two-stage** in the local prototype. A logged-in user calls `totp_setup` to receive a pending secret. This does **not** activate a login requirement. Configure that secret in an authenticator app, then submit `{"action":"totp_confirm","code":"CURRENT_CODE"}` while authenticated. Only a valid six-digit code activates TOTP. Unconfirmed secrets can be replaced by repeating setup; enabled enrollments cannot be replaced by this action.
+
+After confirmation, future sign-ins require a fresh authenticator code. Codes used to confirm enrollment cannot be replayed as a login code in the same time step. **Account recovery and safe factor removal are still not implemented.** Do not enable this for real users. Production must encrypt stored TOTP secrets, require recent reauthentication for enrollment changes, provide single-use recovery codes, add throttling, and audit account security events.
