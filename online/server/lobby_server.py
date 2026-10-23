@@ -10,6 +10,7 @@ import json
 import secrets
 from lobby_policy import new_room, new_invite, join_room, leave_room, visible
 from accounts import Accounts
+from sessions import SessionRegistry
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -18,6 +19,7 @@ MAX_MEMBERS = 8
 class LobbyServer:
     def __init__(self, account_database=":memory:"):
         self.accounts = Accounts(account_database)
+        self.sessions = SessionRegistry()
         self.rooms = {}
         self.clients = {}
 
@@ -45,6 +47,7 @@ class LobbyServer:
                 await self.send(writer, result)
         finally:
             self.leave(token)
+            self.sessions.revoke(token)
             self.clients.pop(token, None)
             writer.close()
             await writer.wait_closed()
@@ -70,6 +73,19 @@ class LobbyServer:
     async def dispatch(self, token, msg):
         action = msg.get("action")
         client = self.clients[token]
+        if client.get("user_id") is not None and self.sessions.user(token) is None:
+            self.leave(token)
+            client["user_id"] = None
+            client["name"] = None
+        if action == "logout":
+            self.leave(token)
+            self.sessions.revoke(token)
+            client["user_id"] = None
+            client["name"] = None
+            return {"ok": True, "authenticated": False}
+        if action == "session_status":
+            return {"ok": True, "authenticated": self.sessions.user(token) is not None}
+
         if action in ("register", "login"):
             if client.get("user_id") is not None:
                 return {"ok": False, "error": "already_authenticated"}
@@ -85,9 +101,10 @@ class LobbyServer:
                     return {"ok": False, "error": "invalid_credentials"}
             client["name"] = name
             client["user_id"] = uid
+            self.sessions.create(token, uid)
             return {"ok": True, "name": name, "authenticated": True}
         if action in ("friend_request", "friend_accept", "friends", "friend_invite"):
-            uid = client.get("user_id")
+            uid = self.sessions.user(token)
             if uid is None:
                 return {"ok": False, "error": "login_required"}
             if action == "friends":
@@ -117,6 +134,8 @@ class LobbyServer:
             room.setdefault("invite_targets", {})[invite] = target
             return {"ok": True, "invite": invite, "room": room_id, "recipient": msg["name"]}
         if action == "hello":
+            if self.sessions.user(token) is not None:
+                return {"ok": False, "error": "already_authenticated"}
             name = msg.get("name")
             if not isinstance(name, str) or not 1 <= len(name) <= 24 or not name.replace("_", "").isalnum():
                 return {"ok": False, "error": "invalid_name"}
@@ -165,7 +184,7 @@ class LobbyServer:
                     raise PermissionError("invite required")
                 ticket = msg.get("invite")
                 intended = room.get("invite_targets", {}).get(ticket) if isinstance(ticket, str) else None
-                if intended is not None and intended != client.get("user_id"):
+                if intended is not None and intended != self.sessions.user(token):
                     raise PermissionError("invitation recipient mismatch")
                 target = room["members"] if role == "player" else room["spectators"]
                 if token not in target and len(target) >= MAX_MEMBERS:
