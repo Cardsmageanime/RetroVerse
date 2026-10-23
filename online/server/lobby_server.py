@@ -101,7 +101,14 @@ class LobbyServer:
                 secret=self.totp.setup(uid)
             except ValueError:
                 return {"ok":False,"error":"totp_already_enabled"}
-            return {"ok":True,"secret":secret,"warning":"Store secret securely; recovery unavailable in prototype"}
+            return {"ok":True,"secret":secret,"pending_confirmation":True,"warning":"Confirm an authenticator code before enrollment takes effect; recovery unavailable in prototype"}
+        if action == "totp_confirm":
+            uid=self.sessions.user(token)
+            if uid is None:
+                return {"ok":False,"error":"login_required"}
+            if not self.totp.confirm(uid,msg.get("code")):
+                return {"ok":False,"error":"totp_confirmation_failed"}
+            return {"ok":True,"totp_enabled":True}
         if action == "totp_verify":
             pending=client.get("pending_totp")
             if pending is None:return {"ok":False,"error":"totp_not_pending"}
