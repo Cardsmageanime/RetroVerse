@@ -10,6 +10,9 @@ import argparse
 import json
 import secrets
 import subprocess
+import tempfile
+import threading
+from controller_config import generate
 from urllib.parse import urlsplit
 from netplay_bridge import build_command
 
@@ -21,12 +24,14 @@ MAX_REQUEST = 4096
 def prepare(data):
     if not isinstance(data, dict):
         raise ValueError("JSON object required")
-    allowed = {"mode", "retroarch", "core", "content", "peer", "port", "nick"}
+    allowed = {"mode", "retroarch", "core", "content", "peer", "port", "nick", "players"}
     if set(data) - allowed:
         raise ValueError("Unexpected request fields")
-    return build_command(data.get("mode"), data.get("retroarch", "retroarch"),
+    command = build_command(data.get("mode"), data.get("retroarch", "retroarch"),
                          data.get("core", ""), data.get("content", ""),
                          data.get("peer"), data.get("port", 55435), data.get("nick"))
+    overlay = generate(data["players"]) if "players" in data else None
+    return command, overlay
 
 def handler_factory(token, port):
     class Handler(BaseHTTPRequestHandler):
@@ -85,13 +90,32 @@ def handler_factory(token, port):
                 if not 1 <= size <= MAX_REQUEST:
                     raise ValueError("invalid payload size")
                 data = json.loads(self.rfile.read(size).decode("utf-8"))
-                cmd = prepare(data)
+                cmd, overlay = prepare(data)
                 if self.path.endswith("/preview"):
-                    self._json(200, {"ok": True, "command": cmd})
+                    self._json(200, {"ok": True, "command": cmd, "controller_overlay": overlay})
                     return
-                # Start a local process only after explicit browser confirmation.
-                proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL,
-                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                # A per-process directory must survive the asynchronous launch
+                # until RetroArch exits, without altering its user configuration.
+                temp = None
+                if overlay is not None:
+                    temp = tempfile.TemporaryDirectory(prefix="retroverse-netplay-")
+                    file = Path(temp.name) / "controllers.cfg"
+                    file.write_text(overlay, encoding="utf-8")
+                    cmd[1:1] = ["--appendconfig", str(file)]
+                try:
+                    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL,
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except BaseException:
+                    if temp is not None:
+                        temp.cleanup()
+                    raise
+                if temp is not None:
+                    def cleanup():
+                        try:
+                            proc.wait()
+                        finally:
+                            temp.cleanup()
+                    threading.Thread(target=cleanup, daemon=True).start()
                 self._json(200, {"ok": True, "pid": proc.pid})
             except (ValueError, TypeError, UnicodeError, OSError) as exc:
                 self._json(400, {"ok": False, "error": str(exc)[:180]})
