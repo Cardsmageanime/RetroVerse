@@ -38,6 +38,8 @@ class EndToEnd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await s.dispatch("b",{"action":"security_alerts"}))["error"],"login_required")
         await s.dispatch("a",{"action":"register","name":"AuditUser","password":"very-long-passphrase"})
         uid=s.clients["a"]["user_id"]
+        s.audit.clock=lambda:1000
+        s.alerts.clock=lambda:1000
         for _ in range(3):s.audit.record("login_failed",uid)
         result=await s.dispatch("a",{"action":"security_alerts"})
         self.assertEqual(result["alerts"][0]["kind"],"repeated_login_failures")
