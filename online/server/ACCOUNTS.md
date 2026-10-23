@@ -65,3 +65,11 @@ Secrets are stored in local SQLite without at-rest encryption. This is **not dep
 TOTP enrollment is now **two-stage** in the local prototype. A logged-in user calls `totp_setup` to receive a pending secret. This does **not** activate a login requirement. Configure that secret in an authenticator app, then submit `{"action":"totp_confirm","code":"CURRENT_CODE"}` while authenticated. Only a valid six-digit code activates TOTP. Unconfirmed secrets can be replaced by repeating setup; enabled enrollments cannot be replaced by this action.
 
 After confirmation, future sign-ins require a fresh authenticator code. Codes used to confirm enrollment cannot be replayed as a login code in the same time step. **Account recovery and safe factor removal are still not implemented.** Do not enable this for real users. Production must encrypt stored TOTP secrets, require recent reauthentication for enrollment changes, provide single-use recovery codes, add throttling, and audit account security events.
+
+## One-time recovery codes (local prototype)
+
+After confirming TOTP enrollment, the user may request eight recovery codes with `{"action":"recovery_create","password":"CURRENT_PASSWORD"}` from an authenticated connection. The response reveals eight random 24-character lowercase hexadecimal codes **once**. Store them offline; they are not retrievable later. Rotating the set invalidates all previous codes. Only salted hashes are stored in SQLite.
+
+If the authenticator is unavailable, finish the password step of `login`, then use `{"action":"recovery_verify","code":"A_SAVED_CODE"}` on the **same connection** while TOTP verification is pending. Each valid code can be used once. A recovery code bypasses only TOTP; if a PIN is enabled, the PIN is still required. After three incorrect attempts, the pending verification challenge is cancelled.
+
+This feature is still development-only: it lacks external credential throttling, storage encryption, auditing, recovery-key setup confirmation, secure device management and account support processes. The existing loopback-only policy remains mandatory.
