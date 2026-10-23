@@ -4,6 +4,7 @@ on:
     paths:
       - 'interface/title-screen/**'
       - 'interface/neon-showcase/index.html'
+      - 'library/**'
       - 'boot/tools/launch_neon_arm.sh'
       - '.github/workflows/check-title-screen.yml'
   workflow_dispatch:
@@ -26,3 +27,5 @@ jobs:
         run: |
           sh -n boot/tools/launch_neon_arm.sh
           grep -F 'interface/title-screen/index.html' boot/tools/launch_neon_arm.sh
+      - name: Test removable-media library indexing
+        run: python3 -m unittest discover -s library -p 'test_*.py' -v
