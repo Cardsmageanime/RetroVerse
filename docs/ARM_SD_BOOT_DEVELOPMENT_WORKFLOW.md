@@ -10,7 +10,7 @@ Reach a **controlled, non-destructive RetroVerse external-media boot** on the ob
 - `dtb.img` exactly matched `device_trees/g12a_s905x2_2g.dtb` by SHA-256: `66f024a72e9e9c6efcf2e1e61ea6338afb29be12ff2b0da41d1b792b38d17966`.
 - EmuELEC's `kernel.img` and `SYSTEM` matched their recorded MD5 values.
 - HDMI video, the EmuELEC splash, EmulationStation collection loading, and the frontend were observed.
-- Controller input, HDMI audio, networking, repeat boot, and Android fallback after removing the media remain unverified.
+- Controller input, HDMI audio, live gameplay, clean shutdown, repeat external boot without Reset, and normal Android fallback after removing the media were physically verified. Networking remains unverified.
 - This reference boot proves that the installed vendor firmware can start a compatible external ARM system. It does not prove that RetroVerse's kernel, DTB, initramfs, modules, or root filesystem boot.
 - ARM64 kernel/DTB, diagnostic initramfs, Debian ARM64 rootfs tar, and ext4 partition artifacts have CI build records; those records alone do not prove physical RetroVerse boot.
 - Observed vendor bootloader: `U-Boot 2015.01-g51e6fd64e9-dirty`. Exact MMC numbering, commands, load addresses, and boot-script execution remain unobserved.
@@ -28,7 +28,7 @@ Reach a **controlled, non-destructive RetroVerse external-media boot** on the ob
 ## Ordered gates and deliverables
 
 ### Gate A — reproduce the software-only baseline
-- [ ] Run `python -m unittest discover -s boot/tests -p 'test_*.py' -v`.
+- [x] Run `python -m unittest discover -s boot/tests -p 'test_*.py' -v`.
 - [ ] Run `python boot/tools/plan_franklin_uboot.py`.
 - [ ] Run `python boot/tools/check_external_boot_readiness.py`; capture a redacted report.
 - [ ] Review `.github/workflows/check-gamebox-readiness.yml` and the kernel, initramfs, rootfs, and external-media preflight workflows.
@@ -38,7 +38,7 @@ Reach a **controlled, non-destructive RetroVerse external-media boot** on the ob
 - [x] Demonstrate that the installed vendor firmware can start a compatible external system using the recovery/reset trigger.
 - [x] Record the active reference DTB and verify the reference kernel and system checksums.
 - [ ] Identify exact U-Boot MMC numbering, supported commands, boot-script path, and load addresses from passive logs or exact matching firmware evidence.
-- [ ] Confirm whether later boots work without holding Reset.
+- [x] Confirm whether later boots work without holding Reset.
 - **Exit:** the high-level external boot route is physically demonstrated; low-level details needed for a RetroVerse image remain documented as unknown.
 
 ### Gate C — match RetroVerse kernel, DTB, modules, and initramfs
@@ -49,9 +49,9 @@ Reach a **controlled, non-destructive RetroVerse external-media boot** on the ob
 - **Exit:** versioned RetroVerse evidence packet and reproducible offline checks.
 
 ### Gate D — assess removable-media integrity and fallback
-- [ ] Reboot the reference system and confirm external boot repeatability.
-- [ ] Remove the external media and verify normal Android startup, establishing fallback without an internal-storage change.
-- [ ] Test controller input, HDMI audio, shutdown, and at least one game launch/exit.
+- [x] Reboot the reference system and confirm external boot repeatability.
+- [x] Remove the external media and verify normal Android startup, establishing fallback without an internal-storage change.
+- [x] Test controller input, HDMI audio, shutdown, and at least one game launch/exit.
 - [ ] Resolve or bound the earlier GameBox SD CMD18 CRC errors with device-side diagnostics.
 - [ ] Validate the external-only partition plan, root filesystem UUIDs, and non-flashing recovery procedure.
 - **Exit:** repeatable reference boot and fallback evidence with explicit remaining hardware limitations.
@@ -65,13 +65,13 @@ Reach a **controlled, non-destructive RetroVerse external-media boot** on the ob
 
 ## Pull request checklist
 - [x] Linked gate and problem statement; observed evidence separated from assumptions
-- [ ] Focused tests plus the entire `boot/tests` suite run; output linked
+- [x] Focused tests plus the entire `boot/tests` suite run; output linked
 - [x] Safe operations: no internal disk writes, firmware commands, secrets, or private identifiers committed
 - [ ] Source, DTB, kernel provenance, and licenses documented
 - [ ] Reviewer signs off on risks and remaining hardware assumptions
 - [ ] Main branch unchanged until review and manual merge
 
 ## Next concrete work item
-Complete Gate D's repeat-boot and Android-fallback checks, capture the running EmuELEC kernel and hardware identifiers, and then prepare the smallest external-only RetroVerse diagnostic boot candidate for Gate E.
+Capture the running EmuELEC kernel and sanitized hardware identifiers, resolve or bound the SD CMD18 CRC reliability issue, validate the external-only partition plan, and then prepare the smallest external-only RetroVerse diagnostic boot candidate for Gate E.
 
 The successful EmuELEC run is an important board-compatibility result. It is not a declaration that RetroVerse itself is bootable.
