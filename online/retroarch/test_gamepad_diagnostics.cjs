@@ -1,0 +1,13 @@
+const assert=require("node:assert/strict");
+const {family,snapshot}=require("./gamepad_diagnostics.js");
+assert.equal(family("Sony DualSense"),"PlayStation");
+assert.equal(family("Xbox Wireless"),"Xbox");
+assert.equal(family("Nintendo Switch Pro"),"Nintendo");
+assert.equal(family("Some USB Controller"),"Generic / Unknown");
+const list=snapshot([null,{index:3,id:"Xbox Pad",mapping:"standard",connected:true,buttons:[{pressed:false},{pressed:true}],axes:[0.045,-0.8]}, {index:4,connected:false,id:"unplugged",buttons:[],axes:[]}]);
+assert.equal(list.length,1);
+assert.equal(list[0].browserIndex,3);
+assert.deepEqual(list[0].buttons,[false,true]);
+assert.deepEqual(list[0].axes,[0.05,-0.8]);
+assert.equal(snapshot([]).length,0);
+console.log("Read-only controller identification tests passed");
