@@ -1,5 +1,5 @@
 const assert=require("node:assert/strict");
-const {family,snapshot}=require("./gamepad_diagnostics.js");
+const {family,snapshot,readiness,activity}=require("./gamepad_diagnostics.js");
 assert.equal(family("Sony DualSense"),"PlayStation");
 assert.equal(family("Xbox Wireless"),"Xbox");
 assert.equal(family("Nintendo Switch Pro"),"Nintendo");
@@ -10,4 +10,9 @@ assert.equal(list[0].browserIndex,3);
 assert.deepEqual(list[0].buttons,[false,true]);
 assert.deepEqual(list[0].axes,[0.05,-0.8]);
 assert.equal(snapshot([]).length,0);
-console.log("Read-only controller identification tests passed");
+assert.equal(readiness(list).hasTwo,false);
+assert.equal(readiness([{browserIndex:0},{browserIndex:1}]).hasTwo,true);
+const state=activity([{browserIndex:3,axes:[0,0],buttons:[false,false]}],list);
+assert.deepEqual(state[0].buttonsPressed,[1]);
+assert.deepEqual(state[0].movedAxes,[1]);
+console.log("Read-only controller identification and readiness tests passed");
