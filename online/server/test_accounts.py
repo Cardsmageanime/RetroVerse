@@ -40,7 +40,7 @@ class IntegratedTests(unittest.IsolatedAsyncioTestCase):
         await dispatch("a","register",name="Alice",password="alice-long-passphrase")
         await dispatch("b","register",name="Bob",password="bob-long-passphrase")
         await dispatch("c","register",name="Carol",password="carol-long-passphrase")
-        self.assertTrue((await dispatch("a","friend_request",name="Bob"))["ok"])
+        self.assertTrue((await dispatch("a","friend_request",code=(await dispatch("b","friend_code"))["code"]))["ok"])
         self.assertTrue((await dispatch("b","friend_accept",name="Alice"))["ok"])
         room=(await dispatch("a","create",name="Friends",kind="friends"))["room"]
         self.assertEqual((await dispatch("a","friend_invite",name="Carol"))["error"],"not_friends")
