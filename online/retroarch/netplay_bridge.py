@@ -11,6 +11,9 @@ import re
 import shutil
 import subprocess
 import sys
+import json
+import tempfile
+from controller_config import generate
 
 HOST_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.:-]{0,252}$")
 NICK_RE = re.compile(r"^[A-Za-z0-9_ -]{1,32}$")
@@ -67,19 +70,36 @@ def main(argv=None):
     parser.add_argument("--nick")
     parser.add_argument("--retroarch", default="retroarch", help="RetroArch executable or path")
     parser.add_argument("--dry-run", action="store_true", help="Validate and print planned command without launching")
+    parser.add_argument("--controller-profiles", type=Path, help="Opt-in JSON file with two verified RetroArch device indices and button mappings")
     args = parser.parse_args(argv)
     try:
         cmd = build_command(args.mode, args.retroarch, args.core, args.content, args.peer, args.port, args.nick)
     except ValueError as exc:
         parser.error(str(exc))
+    if args.controller_profiles:
+        try:
+            source = json.loads(args.controller_profiles.read_text(encoding="utf-8"))
+            overlay = generate(source["players"])
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            parser.error("Invalid controller profiles: " + str(exc))
+    else:
+        overlay = None
     if args.dry_run:
         # shlex.join for readable POSIX output only. Actual launch is argv-based.
         import shlex
+        if overlay is not None:
+            print("Controller overlay validated; --appendconfig will be used at launch.")
         print(shlex.join(cmd))
         return 0
     if not (Path(args.retroarch).is_file() or shutil.which(args.retroarch)):
         parser.error("RetroArch executable not found")
     try:
+        if overlay is not None:
+            with tempfile.TemporaryDirectory(prefix="retroverse-netplay-") as tempdir:
+                overlay_file = Path(tempdir) / "controllers.cfg"
+                overlay_file.write_text(overlay, encoding="utf-8")
+                cmd[1:1] = ["--appendconfig", str(overlay_file)]
+                return subprocess.call(cmd)
         return subprocess.call(cmd)
     except OSError as exc:
         print(f"Failed to launch RetroArch: {exc}", file=sys.stderr)
