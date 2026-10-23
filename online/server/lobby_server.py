@@ -15,6 +15,7 @@ from pin_auth import PinStore
 from totp_auth import TotpStore
 from recovery_codes import RecoveryStore
 from login_limits import AttemptLimiter
+from security_audit import SecurityAudit
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -29,6 +30,7 @@ class LobbyServer:
         self.recovery = RecoveryStore(self.accounts.db)
         self.login_limits = AttemptLimiter()
         self.factor_limits = AttemptLimiter(limit=5, window=300)
+        self.audit = SecurityAudit(self.accounts.db)
         self.rooms = {}
         self.clients = {}
 
@@ -80,6 +82,36 @@ class LobbyServer:
         self.clients[token]["room"] = None
 
     async def dispatch(self, token, msg):
+        """Audit only an allowlisted outcome; never retain submitted credentials."""
+        action=msg.get("action")
+        before=self.sessions.user(token)
+        result=await self._dispatch(token,msg)
+        after=self.sessions.user(token)
+        event=None
+        if action == "login":
+            if result.get("error") == "invalid_credentials": event="login_failed"
+            elif result.get("error") == "login_throttled": event="login_throttled"
+            elif result.get("ok"): event="login_success"
+        elif action == "register" and result.get("ok"): event="register_success"
+        elif action == "logout" and before is not None: event="logout"
+        elif action == "pin_setup" and result.get("ok"): event="pin_enabled"
+        elif action == "totp_confirm" and result.get("ok"): event="totp_enabled"
+        elif action == "recovery_create" and result.get("ok"): event="recovery_rotated"
+        elif action in ("pin_verify","totp_verify","recovery_verify"):
+            if result.get("error") == "factor_throttled": event="factor_throttled"
+            elif result.get("ok"): event="factor_success"
+            elif result.get("error") in ("pin_invalid","pin_attempts_exhausted","totp_invalid","totp_attempts_exhausted","recovery_invalid","recovery_attempts_exhausted"): event="factor_failed"
+        if event:
+            uid=after or before
+            if uid is None and action in ("pin_verify","totp_verify","recovery_verify"):
+                pending=self.clients[token].get("pending_pin") or self.clients[token].get("pending_totp")
+                if pending: uid=pending[0]
+            if uid is None and action=="login":
+                uid=self.accounts.find(msg.get("name"))
+            self.audit.record(event,uid)
+        return result
+
+    async def _dispatch(self, token, msg):
         action = msg.get("action")
         client = self.clients[token]
         if client.get("user_id") is not None and self.sessions.user(token) is None:
