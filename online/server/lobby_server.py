@@ -130,6 +130,13 @@ class LobbyServer:
             client["pending_pin"] = None
             client["pending_totp"] = None
             return {"ok": True, "authenticated": False}
+        if action == "security_alert_ack":
+            uid=self.sessions.user(token)
+            if uid is None:
+                return {"ok":False,"error":"login_required"}
+            if not self.alerts.acknowledge(uid,msg.get("kind")):
+                return {"ok":False,"error":"alert_not_found"}
+            return {"ok":True,"acknowledged":True}
         if action == "security_alerts":
             uid=self.sessions.user(token)
             if uid is None:
