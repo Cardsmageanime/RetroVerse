@@ -12,6 +12,7 @@ from lobby_policy import new_room, new_invite, join_room, leave_room, visible
 from accounts import Accounts
 from sessions import SessionRegistry
 from pin_auth import PinStore
+from totp_auth import TotpStore
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -22,6 +23,7 @@ class LobbyServer:
         self.accounts = Accounts(account_database)
         self.sessions = SessionRegistry()
         self.pins = PinStore(self.accounts.db)
+        self.totp = TotpStore(self.accounts.db)
         self.rooms = {}
         self.clients = {}
 
@@ -80,16 +82,42 @@ class LobbyServer:
             client["user_id"] = None
             client["name"] = None
             client["pending_pin"] = None
+            client["pending_totp"] = None
         if action == "logout":
             self.leave(token)
             self.sessions.revoke(token)
             client["user_id"] = None
             client["name"] = None
             client["pending_pin"] = None
+            client["pending_totp"] = None
             return {"ok": True, "authenticated": False}
         if action == "session_status":
             return {"ok": True, "authenticated": self.sessions.user(token) is not None}
 
+        if action == "totp_setup":
+            uid=self.sessions.user(token)
+            if uid is None:return {"ok":False,"error":"login_required"}
+            try:
+                secret=self.totp.setup(uid)
+            except ValueError:
+                return {"ok":False,"error":"totp_already_enabled"}
+            return {"ok":True,"secret":secret,"warning":"Store secret securely; recovery unavailable in prototype"}
+        if action == "totp_verify":
+            pending=client.get("pending_totp")
+            if pending is None:return {"ok":False,"error":"totp_not_pending"}
+            uid,name,attempts=pending
+            if not self.totp.verify(uid,msg.get("code")):
+                attempts+=1
+                client["pending_totp"]=(uid,name,attempts) if attempts<3 else None
+                return {"ok":False,"error":"totp_invalid" if attempts<3 else "totp_attempts_exhausted"}
+            client["pending_totp"]=None
+            if self.pins.enabled(uid):
+                client["pending_pin"]=(uid,name,0)
+                return {"ok":True,"authenticated":False,"pin_required":True}
+            client["name"]=name
+            client["user_id"]=uid
+            self.sessions.create(token,uid)
+            return {"ok":True,"authenticated":True,"name":name}
         if action == "pin_setup":
             uid = self.sessions.user(token)
             if uid is None:
@@ -114,7 +142,7 @@ class LobbyServer:
             self.sessions.create(token, uid)
             return {"ok": True, "authenticated": True, "name": name}
         if action in ("register", "login"):
-            if client.get("user_id") is not None or client.get("pending_pin") is not None:
+            if client.get("user_id") is not None or client.get("pending_pin") is not None or client.get("pending_totp") is not None:
                 return {"ok": False, "error": "already_authenticated"}
             name, password = msg.get("name"), msg.get("password")
             if action == "register":
@@ -126,6 +154,9 @@ class LobbyServer:
                 uid = self.accounts.authenticate(name, password)
                 if uid is None:
                     return {"ok": False, "error": "invalid_credentials"}
+            if action == "login" and self.totp.enabled(uid):
+                client["pending_totp"]=(uid,name,0)
+                return {"ok":True,"authenticated":False,"totp_required":True}
             if action == "login" and self.pins.enabled(uid):
                 client["pending_pin"] = (uid, name, 0)
                 return {"ok": True, "authenticated": False, "pin_required": True}
@@ -164,7 +195,7 @@ class LobbyServer:
             room.setdefault("invite_targets", {})[invite] = target
             return {"ok": True, "invite": invite, "room": room_id, "recipient": msg["name"]}
         if action == "hello":
-            if self.sessions.user(token) is not None or client.get("pending_pin") is not None:
+            if self.sessions.user(token) is not None or client.get("pending_pin") is not None or client.get("pending_totp") is not None:
                 return {"ok": False, "error": "already_authenticated"}
             name = msg.get("name")
             if not isinstance(name, str) or not 1 <= len(name) <= 24 or not name.replace("_", "").isalnum():
