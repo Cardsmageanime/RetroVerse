@@ -306,6 +306,9 @@ class LobbyServer:
             name = msg.get("name")
             if not isinstance(name, str) or not 1 <= len(name) <= 24 or not name.replace("_", "").isalnum():
                 return {"ok": False, "error": "invalid_name"}
+            # Guests must not impersonate registered accounts in room chat.
+            if self.accounts.find(name) is not None:
+                return {"ok": False, "error": "name_reserved"}
             client["name"] = name
             return {"ok": True, "name": name, "protocol": 1}
         if action == "list":
