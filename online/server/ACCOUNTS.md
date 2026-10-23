@@ -51,3 +51,11 @@ On a subsequent login with a correct password, the service returns `{"ok":true,"
 **This is not production MFA:** A password and static PIN are both knowledge factors, and there is no independent mobile possession proof. A PIN is vulnerable to guessing and phishing; the local prototype still lacks rate limits across login attempts/connections, HTTPS, recovery, delivery verification, secure MFA enrollment reauthentication, and public deployment hardening. Do not reuse real account passwords or PINs in this prototype. The system does not currently offer PIN removal or recovery; a production rollout must build those pathways before accounts depend on it.
 
 The current code remains loopback-only. Tests cover PIN setup, pending challenges, and failed-attempt limits. No SMS has been integrated.
+
+## Authenticator app (TOTP) prototype
+
+The local RetroVerse account service now implements RFC 6238-style six-digit authenticator codes (30-second steps, ±one time-step clock tolerance) with replay prevention. On an authenticated connection, `{"action":"totp_setup"}` generates a Base32 secret. **Do not enable on valuable accounts:** this early prototype immediately enables the secret and has **no recovery or re-enrollment** if the authenticator is lost. A production enrollment must require proof of possession, recovery codes, and reauthentication.
+
+After password login, `totp_required` signals that a code is needed. Submit `{"action":"totp_verify","code":"123456"}` on the same connection. Three failed attempts cancel the challenge. If a separate PIN was previously enabled, PIN verification is required afterward. Codes are verified locally; no SMS service is integrated.
+
+Secrets are stored in local SQLite without at-rest encryption. This is **not deployable internet MFA**: HTTPS/TLS, encrypted secrets, enrollment confirmation, password-rate limiting, recovery, trusted devices, and operational controls remain necessary. The tests use a synthetic clock and do not prove live phone-app compatibility.
