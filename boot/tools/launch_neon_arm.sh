@@ -23,4 +23,17 @@ if [ -z "$BROWSER" ]; then
   echo "Chromium is required for this prototype." >&2
   exit 3
 fi
+if [ -n "${RETROVERSE_ROM_ROOT:-}" ]; then
+  if [ ! -d "$RETROVERSE_ROM_ROOT" ]; then
+    echo "Configured ROM directory unavailable: $RETROVERSE_ROM_ROOT" >&2
+    exit 4
+  fi
+  # Start the loopback-only library service in the foreground; the browser
+  # accesses it at localhost. No mounts or changes to Android are performed.
+  python3 "$ROOT/library/library_ui_server.py" --rom-root "$RETROVERSE_ROM_ROOT" &
+  SERVICE_PID=$!
+  trap 'kill "$SERVICE_PID" 2>/dev/null || true' EXIT INT TERM
+  "$BROWSER" --kiosk --no-first-run --disable-session-crashed-bubble "http://127.0.0.1:8769/"
+  exit $?
+fi
 exec "$BROWSER" --kiosk --no-first-run --disable-session-crashed-bubble "file://$PAGE"
