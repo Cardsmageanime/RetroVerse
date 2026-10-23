@@ -270,13 +270,17 @@ class LobbyServer:
             client["user_id"] = uid
             self.sessions.create(token, uid)
             return {"ok": True, "name": name, "authenticated": True}
-        if action in ("friend_request", "friend_accept", "friends", "friend_invite"):
+        if action in ("friend_code", "friend_request", "friend_accept", "friend_requests", "friends", "friend_invite"):
             uid = self.sessions.user(token)
             if uid is None:
                 return {"ok": False, "error": "login_required"}
             if action == "friends":
                 return {"ok": True, "friends": self.accounts.friends(uid)}
-            target = self.accounts.find(msg.get("name"))
+            if action == "friend_code":
+                return {"ok": True, "code": self.accounts.friend_code(uid)}
+            if action == "friend_requests":
+                return {"ok": True, "requests": self.accounts.friend_requests(uid)}
+            target = self.accounts.find_by_friend_code(msg.get("code")) if action == "friend_request" else self.accounts.find(msg.get("name"))
             if target is None or target == uid:
                 return {"ok": False, "error": "invalid_friend"}
             if action == "friend_request":
@@ -325,6 +329,9 @@ class LobbyServer:
                 room = new_room(name, token, msg.get("kind", "public"))
             except ValueError:
                 return {"ok": False, "error": "invalid_kind"}
+            if room["kind"] == "friends" and self.sessions.user(token) is None:
+                return {"ok": False, "error": "login_required"}
+            room["owner_uid"] = self.sessions.user(token)
             self.leave(token)
             room_id = secrets.token_hex(4)
             self.rooms[room_id] = room
@@ -334,6 +341,8 @@ class LobbyServer:
             rid = client["room"]
             if not rid or rid not in self.rooms:
                 return {"ok": False, "error": "not_in_room"}
+            if self.rooms[rid]["kind"] == "friends":
+                return {"ok": False, "error": "friend_invite_required"}
             try:
                 return {"ok": True, "invite": new_invite(self.rooms[rid], token)}
             except PermissionError:
@@ -361,6 +370,14 @@ class LobbyServer:
             try:
                 if role not in ("player", "spectator"):
                     raise ValueError("invalid role")
+                if room["kind"] == "friends":
+                    uid=self.sessions.user(token)
+                    if uid is None or not self.accounts.are_friends(uid,room.get("owner_uid")):
+                        raise PermissionError("mutual friend required")
+                    if token not in room["members"] and token not in room["spectators"]:
+                        ticket=msg.get("invite")
+                        if not isinstance(ticket,str) or room.get("invite_targets",{}).get(ticket)!=uid:
+                            raise PermissionError("account-bound invitation required")
                 if role == "spectator" and room["kind"] == "creator":
                     raise PermissionError("spectator not available")
                 if room["kind"] != "public" and token not in room["members"] and token not in room["spectators"] and (not isinstance(msg.get("invite"), str) or msg.get("invite") not in room["invites"]):
@@ -400,6 +417,10 @@ class LobbyServer:
             room = self.rooms[client["room"]]
             if token in room["spectators"]:
                 return {"ok": False, "error": "spectator_read_only"}
+            if room["kind"] == "friends":
+                uid=self.sessions.user(token)
+                if uid is None or not self.accounts.are_friends(uid,room.get("owner_uid")):
+                    return {"ok":False,"error":"friends_only"}
             event = {"event": "chat", "room": client["room"], "from": client["name"], "text": text}
             for member in list(room["members"] | room["spectators"]):
                 if member != token and member in self.clients:
