@@ -16,6 +16,7 @@ from totp_auth import TotpStore
 from recovery_codes import RecoveryStore
 from login_limits import AttemptLimiter
 from security_audit import SecurityAudit
+from security_alerts import SecurityAlerts
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -31,6 +32,7 @@ class LobbyServer:
         self.login_limits = AttemptLimiter()
         self.factor_limits = AttemptLimiter(limit=5, window=300)
         self.audit = SecurityAudit(self.accounts.db)
+        self.alerts = SecurityAlerts(self.accounts.db)
         self.rooms = {}
         self.clients = {}
 
@@ -128,6 +130,11 @@ class LobbyServer:
             client["pending_pin"] = None
             client["pending_totp"] = None
             return {"ok": True, "authenticated": False}
+        if action == "security_alerts":
+            uid=self.sessions.user(token)
+            if uid is None:
+                return {"ok":False,"error":"login_required"}
+            return {"ok":True,"alerts":self.alerts.recent(uid)}
         if action == "security_history":
             uid=self.sessions.user(token)
             if uid is None:
