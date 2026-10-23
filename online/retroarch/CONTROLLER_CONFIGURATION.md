@@ -49,3 +49,11 @@ No real gamepad compatibility or physical GameBox test has yet been demonstrated
 The Netplay menu now offers editable indices for all 16 digital RetroPad inputs for **each of two players**: A/B/X/Y, Start/Select, D-pad, L/R, L2/R2, and L3/R3. Use **Reset to standard mapping** to restore sample assignments, then **Validate & Preview** to see the generated overlay. RetroArch joypad button indices and browser Gamepad API button indices are not always the same.
 
 **Scope:** This milestone does *not* yet remap analog-stick axes in RetroArch, automatically detect native joypad indices, or verify physical controllers. Testing remains required for each actual platform and driver. These assignments are optional and only used when controller overrides are enabled.
+
+## Analog stick milestone
+
+The RetroVerse Netplay panel now includes independent left/right X/Y axis assignments for Player 1 and Player 2. An optional controller overlay produces `input_playerN_l_x_plus_axis` and corresponding minus bindings (and similarly for Y and right stick). Indices must match the *native RetroArch* joypad driver; browser mappings are not authoritative. Axis direction uses RetroArch's native plus/minus convention, and the form resets to 0/1/2/3 for each player.
+
+RetroArch's `input_analog_deadzone` is a **global setting**, not a per-player option. This change deliberately leaves it unchanged rather than pretending to support per-controller deadzones. Physical hardware detection, driver-specific mappings, real netplay playtests, and booting on the ARM GameBox remain unverified.
+
+The Console Edition remains separate and is on hold.
