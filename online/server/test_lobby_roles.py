@@ -20,7 +20,7 @@ class LobbyRoleTests(unittest.IsolatedAsyncioTestCase):
         for token in ("host","guest","watcher"):
             self.s.clients[token]={"name":token,"room":None,"writer":Writer()}
     async def test_friends_invite_and_private_visibility(self):
-        created=await self.s.dispatch("host",{"action":"create","name":"Friends game","kind":"friends"})
+        created=await self.s.dispatch("host",{"action":"create","name":"Invitation-only game","kind":"creator"})
         rid=created["room"]
         self.assertEqual((await self.s.dispatch("guest",{"action":"list"}))["rooms"],[])
         denied=await self.s.dispatch("guest",{"action":"join","room":rid})
