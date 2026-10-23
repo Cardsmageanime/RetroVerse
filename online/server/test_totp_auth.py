@@ -44,9 +44,12 @@ class Tests(unittest.IsolatedAsyncioTestCase):
         await self.call("a","register",name="ExampleUser",password="long-example-password")
         await self.call("a","pin_setup",pin="123456")
         secret=(await self.call("a","totp_setup"))["secret"]
+        self.assertTrue((await self.call("a","totp_confirm",code=code(secret,self.now[0]//30)))["totp_enabled"])
+        self.now[0]+=60  # enrollment code must not be reused at login
         await self.call("a","logout")
-        await self.call("b","login",name="ExampleUser",password="long-example-password")
-        result=await self.call("b","totp_verify",code=code(secret,1800000000//30))
+        login=await self.call("b","login",name="ExampleUser",password="long-example-password")
+        self.assertTrue(login["totp_required"])
+        result=await self.call("b","totp_verify",code=code(secret,self.now[0]//30))
         self.assertTrue(result["pin_required"])
         self.assertFalse((await self.call("b","session_status"))["authenticated"])
         self.assertTrue((await self.call("b","pin_verify",pin="123456"))["authenticated"])
