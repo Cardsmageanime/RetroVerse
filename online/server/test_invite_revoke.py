@@ -22,7 +22,7 @@ class PrivateInvites(unittest.IsolatedAsyncioTestCase):
         self.assertTrue((await self.send("host","invite_revoke",invite=ticket))["ok"])
         self.assertEqual((await self.send("guest","join",room=room,invite=ticket))["error"],"access_denied")
     async def test_revoke_unknown_and_preserve_other_ticket(self):
-        room=(await self.send("host","create",name="Private",kind="friends"))["room"]
+        room=(await self.send("host","create",name="Private",kind="creator"))["room"]
         first=(await self.send("host","invite"))["invite"]
         second=(await self.send("host","invite"))["invite"]
         self.assertEqual((await self.send("host","invite_revoke",invite="absent"))["error"],"invite_not_found")
