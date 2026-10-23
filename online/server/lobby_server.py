@@ -128,6 +128,11 @@ class LobbyServer:
             client["pending_pin"] = None
             client["pending_totp"] = None
             return {"ok": True, "authenticated": False}
+        if action == "security_history":
+            uid=self.sessions.user(token)
+            if uid is None:
+                return {"ok":False,"error":"login_required"}
+            return {"ok":True,"events":self.audit.recent(uid)}
         if action == "session_status":
             return {"ok": True, "authenticated": self.sessions.user(token) is not None}
 
