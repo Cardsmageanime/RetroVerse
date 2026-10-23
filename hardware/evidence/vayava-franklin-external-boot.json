@@ -1,14 +1,59 @@
 {
   "board_id": "franklin",
-  "soc_identity_confirmed": false,
+  "soc_identity_confirmed": true,
+  "soc_identity_basis": [
+    "Android board evidence identified the G12A/U212 family",
+    "A physical EmuELEC boot completed with g12a_s905x2_2g.dtb selected as dtb.img"
+  ],
   "board_dtb_matches_compiled_kernel": false,
-  "external_uboot_boot_path_verified": false,
-  "android_internal_storage_untouched": false,
-  "notes": "Windows 256 MiB write/read SHA-256 hashes matched; Windows filesystem check passed. Android dmesg showed SD CMD18 CRC errors in an isolated observed burst. Neither proves full-card health or board-side reliability. U-Boot SD boot and matching mainline DTB remain unverified; no physical RetroVerse boot attempted. internal_storage_untouched=false means absence of a complete independent verification, not evidence of modification.",
+  "external_uboot_boot_path_verified": true,
+  "external_uboot_boot_path_scope": "A vendor recovery/reset-triggered external boot reached EmuELEC and EmulationStation. Exact U-Boot commands, MMC numbering, and load addresses remain unobserved.",
+  "android_internal_storage_untouched": true,
+  "android_fallback_after_media_removal_verified": true,
+  "notes": "On 2026-10-23, the owner completed a physical external-media boot of the existing EmuELEC installation on the Vayava/Franklin box. HDMI video, the EmuELEC splash, EmulationStation collection loading, the frontend, a RetroArch/libretro launch path, Cannonball display-calibration UI, the Abuse title screen, active game control, HDMI audio, a repeat external boot without holding Reset, clean shutdown, media removal, and normal Android fallback were observed. This verifies a compatible reference OS external boot, gameplay path, and reversible external-media behavior without an observed internal-storage change; it is not proof that a RetroVerse-built kernel, DTB, initramfs, or root filesystem boots.",
+  "reference_os_boot": {
+    "verified": true,
+    "observed_date": "2026-10-23",
+    "os": "EmuELEC",
+    "version": "4.3",
+    "boot_media": "external removable media",
+    "recovery_trigger_used": true,
+    "active_dtb_filename": "g12a_s905x2_2g.dtb",
+    "active_dtb_sha256": "66f024a72e9e9c6efcf2e1e61ea6338afb29be12ff2b0da41d1b792b38d17966",
+    "kernel_md5": "505156cb65832bcfbeeb2db3a56c5120",
+    "system_md5": "23c4fd1c5bb43cb4099107e24ed60fd0",
+    "hdmi_video_verified": true,
+    "emulationstation_frontend_reached": true,
+    "retroarch": {
+      "version": "1.9.8",
+      "git_revision": "37aa13bb47",
+      "build_date": "2021-10-04",
+      "input_driver_found": "udev",
+      "libretro_core_loaded": "cannonball_libretro.so",
+      "launch_path_reached": true,
+      "gameplay_verified": true,
+      "cannonball_calibration_ui_reached": true
+    },
+    "controller_function_verified": true,
+    "hdmi_audio_verified": true,
+    "network_verified": false,
+    "repeat_boot_verified": true,
+    "game_application": {
+      "title": "Abuse",
+      "title_screen_rendered": true,
+      "active_gameplay_verified": true
+    },
+    "gameplay_verified": true,
+    "repeat_boot_without_reset_verified": true,
+    "clean_shutdown_verified": true,
+    "android_fallback_after_media_removal_verified": true
+  },
   "windows_hash_readback_passed": true,
   "windows_hash_readback_test_bytes": 268435456,
   "windows_filesystem_check_passed": true,
+  "linux_image_checksums_verified": true,
   "gamebox_sd_link_reliability_verified": false,
   "gamebox_sd_crc_errors_observed": true,
-  "windows_full_capacity_card_integrity_verified": false
+  "windows_full_capacity_card_integrity_verified": false,
+  "android_fallback_boot_observed_date": "2026-10-23"
 }
