@@ -41,3 +41,13 @@ Registered logins now get a per-connection, cryptographically random session wit
 When an authenticated session expires, its client identity and room participation are cleared on the next request; host rooms are closed as needed. Account-specific friends and invitations require a currently valid session. The legacy guest `hello` action cannot rename a currently authenticated session.
 
 Run `python -m unittest discover -s online/server -p 'test_*.py' -v` to validate the session lifecycle. These are development-only sessions bound to the live local connection, **not a secure remotely accessible authentication protocol**. MFA, TLS, account recovery, throttling, public service deployment, and removing legacy guest authorization remain future work.
+
+## Optional PIN second-step prototype
+
+The local RetroVerse account service now supports an optional PIN second step. After `register` or an authenticated `login`, call `{"action":"pin_setup","pin":"123456"}` once to enable it (sample PIN **not** recommended for actual use). Pins are 6–10 ASCII digits and are stored as independently salted PBKDF2-HMAC-SHA256 hashes in SQLite.
+
+On a subsequent login with a correct password, the service returns `{"ok":true,"authenticated":false,"pin_required":true}` instead of immediately establishing a session. Send `{"action":"pin_verify","pin":"YOUR_PIN"}` from the same local connection to complete login. During the challenge, authenticated friends and invitations remain unavailable. Three incorrect guesses end the pending challenge; begin login again after that. `logout` clears pending state.
+
+**This is not production MFA:** A password and static PIN are both knowledge factors, and there is no independent mobile possession proof. A PIN is vulnerable to guessing and phishing; the local prototype still lacks rate limits across login attempts/connections, HTTPS, recovery, delivery verification, secure MFA enrollment reauthentication, and public deployment hardening. Do not reuse real account passwords or PINs in this prototype. The system does not currently offer PIN removal or recovery; a production rollout must build those pathways before accounts depend on it.
+
+The current code remains loopback-only. Tests cover PIN setup, pending challenges, and failed-attempt limits. No SMS has been integrated.
