@@ -28,3 +28,16 @@ RETROVERSE_ROM_ROOT="/media/user/USB/roms" sh boot/tools/launch_neon_arm.sh
 ```
 
 No internal Android partition is intentionally discovered. Real hardware and atypical Linux device topology require testing; do not assume every listed mount is safe without user approval. Cover art and metadata are not implemented by this milestone.
+
+
+## Visual USB/SD drive picker
+
+On an already-running graphical Linux system, opt into the new storage picker with:
+
+```sh
+RETROVERSE_DRIVE_PICKER=1 sh boot/tools/launch_neon_arm.sh
+```
+
+RetroVerse opens its title screen. Choose **Start** or **Offline Mode**, open **Game Library**, and use **Find drives**. The selector lists *candidate ROM directories from already-mounted removable devices*, and **Scan selected drive** is an explicit choice. Paths are rechecked against current removable-device candidates by the local server before scanning. The service never mounts a disk, writes to ROM files, edits saves, or accesses Android's internal storage intentionally.
+
+This is still a Linux desktop prototype; GameBox boot, actual SD/USB enumeration, native file permissions and platform support are unverified. Never expose this localhost development service to a network or forward its port.
