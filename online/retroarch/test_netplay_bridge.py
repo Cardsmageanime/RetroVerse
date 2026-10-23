@@ -45,6 +45,35 @@ class BridgeTests(unittest.TestCase):
             result=bridge.main(["host","--core",str(self.core),"--content",str(self.game)])
             self.assertEqual(result,0)
             self.assertIsInstance(call.call_args.args[0],list)
+    def test_temporary_controller_overlay_keeps_original_config_untouched(self):
+        import json
+        from pathlib import Path
+        profile=Path(self.tmp.name)/"players.json"
+        profile.write_text(json.dumps({"players":[{"joypad_index":0,"buttons":{"a":1,"up":12}},{"joypad_index":1,"buttons":{"a":1,"up":12}}]}))
+        capture={}
+        def run(cmd):
+            self.assertIn("--appendconfig",cmd)
+            path=Path(cmd[cmd.index("--appendconfig")+1])
+            self.assertTrue(path.exists())
+            capture["path"]=path
+            capture["content"]=path.read_text()
+            return 0
+        with patch.object(bridge.subprocess,"call",side_effect=run),patch.object(bridge.shutil,"which",return_value="/usr/bin/retroarch"):
+            result=bridge.main(["host","--core",str(self.core),"--content",str(self.game),"--controller-profiles",str(profile)])
+        self.assertEqual(result,0)
+        self.assertIn('input_player2_joypad_index = "1"',capture["content"])
+        self.assertFalse(capture["path"].exists())
+        self.assertTrue(profile.exists())
+
+    def test_invalid_controller_overlay_prevents_launch(self):
+        import json
+        from pathlib import Path
+        profile=Path(self.tmp.name)/"invalid.json"
+        profile.write_text(json.dumps({"players":[{"joypad_index":0},{"joypad_index":0}]}))
+        with patch.object(bridge.subprocess,"call") as call,self.assertRaises(SystemExit):
+            bridge.main(["host","--core",str(self.core),"--content",str(self.game),"--controller-profiles",str(profile)])
+        call.assert_not_called()
+
     def test_dry_run(self):
         with patch.object(bridge.subprocess,"call") as call:
             self.assertEqual(bridge.main(["host","--core",str(self.core),"--content",str(self.game),"--dry-run"]),0)
