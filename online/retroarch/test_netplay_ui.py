@@ -22,15 +22,15 @@ class NetplayUITests(unittest.TestCase):
         self.payload={"mode":"host","core":str(self.core),"content":str(self.game),"retroarch":"retroarch","port":55435}
 
     def test_host(self):
-        self.assertIn("--host",ui.prepare(self.payload))
+        self.assertIn("--host",ui.prepare(self.payload)[0])
 
     def test_join(self):
         p=dict(self.payload,mode="join",peer="127.0.0.1")
-        self.assertIn("--connect",ui.prepare(p))
+        self.assertIn("--connect",ui.prepare(p)[0])
 
     def test_spectate(self):
         p=dict(self.payload,mode="spectate",peer="127.0.0.1")
-        self.assertIn("--spectate",ui.prepare(p))
+        self.assertIn("--spectate",ui.prepare(p)[0])
 
     def test_no_arbitrary_fields(self):
         with self.assertRaises(ValueError):
@@ -39,6 +39,18 @@ class NetplayUITests(unittest.TestCase):
     def test_no_shell_injection(self):
         with self.assertRaises(ValueError):
             ui.prepare(dict(self.payload,peer="example.org;bad",mode="join"))
+
+    def test_visual_two_player_mappings(self):
+        p=dict(self.payload,players=[{"joypad_index":0,"buttons":{"a":1}},
+                                    {"joypad_index":1,"buttons":{"a":2}}])
+        command,overlay=ui.prepare(p)
+        self.assertIn("--host",command)
+        self.assertIn('input_player2_a_btn = "2"',overlay)
+
+    def test_duplicate_joypads_are_rejected(self):
+        p=dict(self.payload,players=[{"joypad_index":0},{"joypad_index":0}])
+        with self.assertRaises(ValueError):
+            ui.prepare(p)
 
     def test_static_files_exist(self):
         self.assertTrue(ui.NEON.is_file())
