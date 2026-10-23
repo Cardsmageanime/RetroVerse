@@ -26,7 +26,7 @@ The owner physically booted the existing EmuELEC installation from external remo
 | Controller | Game control responded during the test | Functional input verified by owner observation |
 | HDMI audio | Sound heard through the TV during the game test | Verified by owner observation |
 | Network | Not tested | Unknown |
-| Repeat boot | Not tested | Unknown |
+| Repeat boot | EmuELEC restarted from its menu and returned without holding Reset | Verified by owner observation |
 | Android fallback with media removed | Not tested | Unknown |
 | SD read quality | Earlier Android logs showed CMD18 CRC errors; one full boot later succeeded | Reliability still unverified |
 | RetroVerse kernel/DTB/rootfs | Not physically booted | Pending |
@@ -39,12 +39,11 @@ No room photographs are committed to this public repository. The record retains 
 
 ## Remaining non-destructive checks
 
-1. Reboot with the external media still inserted and determine whether Reset is required again.
-2. Shut down, remove the media, and verify that Android starts normally.
-3. In the running reference system, capture sanitized kernel, DTB model, memory, storage, and network-interface information.
-4. Verify clean game exit and system shutdown.
-5. Investigate the earlier CMD18 CRC errors before treating long-duration media access as reliable.
-6. Keep all identifiers such as MAC addresses, serial numbers, account tokens, and Wi-Fi credentials out of committed logs.
+1. Shut down, remove the media, and verify that Android starts normally.
+2. In the running reference system, capture sanitized kernel, DTB model, memory, storage, and network-interface information.
+3. Verify clean system shutdown.
+4. Investigate the earlier CMD18 CRC errors before treating long-duration media access as reliable.
+5. Keep all identifiers such as MAC addresses, serial numbers, account tokens, and Wi-Fi credentials out of committed logs.
 
 ## Required reviewer questions
 
@@ -66,7 +65,7 @@ Do not copy the legacy EmuELEC DTB into a differently built RetroVerse kernel wi
 - [x] Reference kernel and system checksum match recorded
 - [x] External reference OS reached HDMI userspace
 - [ ] Exact U-Boot command path and MMC mapping captured
-- [ ] Repeat external boot documented
+- [x] Repeat external boot without Reset documented
 - [ ] Known-good Android fallback documented
 - [x] RetroArch/libretro core loaded and Cannonball calibration UI rendered
 - [x] Abuse game application reached its title screen
