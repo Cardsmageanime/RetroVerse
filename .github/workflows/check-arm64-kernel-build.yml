@@ -1,0 +1,23 @@
+name: Check ARM64 Kernel Build Preparation
+on:
+  push:
+    paths:
+      - 'boot/tools/build_arm64_kernel.sh'
+      - 'boot/KERNEL_BUILD.md'
+      - '.github/workflows/check-arm64-kernel-build.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify cross-build script syntax
+        run: sh -n boot/tools/build_arm64_kernel.sh
+      - name: Verify invalid invocation fails safely
+        run: |
+          if sh boot/tools/build_arm64_kernel.sh; then
+            echo "Expected usage failure" >&2
+            exit 1
+          fi
