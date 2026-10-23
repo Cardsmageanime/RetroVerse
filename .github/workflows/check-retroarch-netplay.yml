@@ -24,6 +24,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile RetroArch bridge
-        run: python -m py_compile online/retroarch/netplay_bridge.py online/retroarch/netplay_ui_server.py
+        run: python -m py_compile online/retroarch/netplay_bridge.py online/retroarch/netplay_ui_server.py online/retroarch/controller_config.py
       - name: Verify host join spectator commands and invalid input
         run: python -m unittest discover -s online/retroarch -p 'test_*.py' -v
