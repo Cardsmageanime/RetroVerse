@@ -65,3 +65,13 @@ The local RetroVerse Netplay menu now has **Scan connected controllers**. It use
 **Important:** Browser Gamepad API device indices are not guaranteed to correspond to RetroArch native joypad indices or button numbers. The diagnostic never silently assigns RetroArch joypad indices; users must verify these through RetroArch's Input settings. Some browsers require a button press and browser focus before a gamepad appears.
 
 The local service serves its diagnostic script only on loopback and runs no network upload. Xbox/PlayStation/Nintendo labels are best-effort guesses from device-reported IDs, not hardware authentication. CI tests exercise synthetic gamepad data; **physical hardware/netplay compatibility remains untested**.
+
+## Two-controller hardware verification milestone
+
+The local Netplay menu now includes **Two-controller live test → Refresh Test**. Attach two USB/Bluetooth controllers, focus the browser, press any gamepad button once, and refresh. The display reports whether two distinct browser gamepad devices appear and lists the button indices and axis values reported at that instant.
+
+This is a read-only input diagnostic: it does not automatically assign players or assert native RetroArch support. For the actual RetroArch test, start RetroArch separately, visit **Settings → Input → RetroPad Binds / Port Controls** (menu wording varies), and check both gamepads there. Configure player ports in RetroArch with the verified native joypad indices, then test a locally supported two-player title before attempting netplay. Use matching core/game on the second computer, and test on a trusted LAN first.
+
+**Pass criteria:** (1) Two independently identified browser controllers; (2) both recognized within actual RetroArch; (3) correct control of separate local player slots; (4) after local success, a two-device Netplay session on compatible content. Only (1) can be checked by this new browser panel, and only on hardware physically connected during the test. CI simulates input and is not proof of any physical pass.
+
+The official firmware Console Edition remains deferred. RetroVerse-owned lobbies, chat, invitations and account services are separate from RetroArch gameplay/netplay.
