@@ -40,8 +40,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/retroverse-output"
           cp /tmp/retroverse-build/arch/arm64/boot/Image "$RUNNER_TEMP/retroverse-output/Image"
           cp "$RUNNER_TEMP/retroverse-arm64-manifest.json" "$RUNNER_TEMP/retroverse-output/manifest.json"
-          find /tmp/retroverse-build/arch/arm64/boot/dts -name '*.dtb' -print0 | \
-            tar -C /tmp/retroverse-build/arch/arm64/boot/dts --null -T - -cf "$RUNNER_TEMP/retroverse-output/dtbs.tar"
+          ( cd /tmp/retroverse-build/arch/arm64/boot/dts && \
+            find . -name '*.dtb' -print0 | \
+            tar --null -T - -cf "$RUNNER_TEMP/retroverse-output/dtbs.tar" )
       - name: Upload artifacts for inspection only
         uses: actions/upload-artifact@v4
         with:
