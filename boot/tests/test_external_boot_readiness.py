@@ -15,6 +15,7 @@ PROFILE = {
     "android_sd_max_frequency_hz_observed": 100000000,
 }
 EVIDENCE = {
+    "board_id": "franklin",
     "soc_identity_confirmed": True,
     "board_dtb_matches_compiled_kernel": False,
     "external_uboot_boot_path_verified": False,
@@ -35,6 +36,7 @@ class ReadinessTests(unittest.TestCase):
 
     def test_even_full_evidence_never_authorizes_flashing(self):
         all_evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES, "android_internal_storage_untouched")}
+        all_evidence["board_id"] = "franklin"
         result = module.evaluate(PROFILE, all_evidence)
         self.assertEqual(result["readiness"], "candidate-for-controlled-boot-planning")
         self.assertFalse(result["can_flash"])
@@ -59,6 +61,19 @@ class ReadinessTests(unittest.TestCase):
         result = module.evaluate(PROFILE, evidence)
         self.assertEqual(result["readiness"], "research-only")
         self.assertFalse(result["can_flash"])
+
+    def test_wrong_evidence_board_id_blocks_planning(self):
+        evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        evidence.update({"board_id": "other-board", "android_internal_storage_untouched": True})
+        result = module.evaluate(PROFILE, evidence)
+        self.assertEqual(result["readiness"], "research-only")
+        self.assertTrue(any("board_id" in x for x in result["findings"]))
+
+    def test_missing_evidence_board_id_blocks_planning(self):
+        evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        evidence["android_internal_storage_untouched"] = True
+        result = module.evaluate(PROFILE, evidence)
+        self.assertEqual(result["readiness"], "research-only")
 
     def test_wrong_board_profile_blocks_planning(self):
         result = module.evaluate({**PROFILE, "android_amlogic_dt_id_observed": "different"}, EVIDENCE)
