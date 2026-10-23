@@ -109,9 +109,6 @@ class LobbyServer:
                 client["pending_pin"] = (uid, name, attempts) if attempts < 3 else None
                 return {"ok": False, "error": "pin_invalid" if attempts < 3 else "pin_attempts_exhausted"}
             client["pending_pin"] = None
-            if action == "login" and self.pins.enabled(uid):
-                client["pending_pin"] = (uid, name, 0)
-                return {"ok": True, "authenticated": False, "pin_required": True}
             client["name"] = name
             client["user_id"] = uid
             self.sessions.create(token, uid)
@@ -129,6 +126,9 @@ class LobbyServer:
                 uid = self.accounts.authenticate(name, password)
                 if uid is None:
                     return {"ok": False, "error": "invalid_credentials"}
+            if action == "login" and self.pins.enabled(uid):
+                client["pending_pin"] = (uid, name, 0)
+                return {"ok": True, "authenticated": False, "pin_required": True}
             client["name"] = name
             client["user_id"] = uid
             self.sessions.create(token, uid)
