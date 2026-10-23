@@ -25,6 +25,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify two-player controller mapping
+        run: node online/gameplay/test_two_player_input.cjs
+      - name: Verify gameplay client JavaScript syntax
+        run: node --check online/gameplay/two_player_input.js
       - name: Validate launcher shell syntax
         run: sh -n boot/tools/launch_neon_arm.sh
       - name: Test lobby and chat protocol
