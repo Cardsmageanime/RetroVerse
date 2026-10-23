@@ -14,6 +14,7 @@ from sessions import SessionRegistry
 from pin_auth import PinStore
 from totp_auth import TotpStore
 from recovery_codes import RecoveryStore
+from login_limits import AttemptLimiter
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -26,6 +27,7 @@ class LobbyServer:
         self.pins = PinStore(self.accounts.db)
         self.totp = TotpStore(self.accounts.db)
         self.recovery = RecoveryStore(self.accounts.db)
+        self.login_limits = AttemptLimiter()
         self.rooms = {}
         self.clients = {}
 
@@ -187,9 +189,13 @@ class LobbyServer:
                 except ValueError:
                     return {"ok": False, "error": "registration_rejected"}
             else:
+                if self.login_limits.saturated() or self.login_limits.blocked(name):
+                    return {"ok": False, "error": "login_throttled"}
                 uid = self.accounts.authenticate(name, password)
                 if uid is None:
+                    self.login_limits.failure(name)
                     return {"ok": False, "error": "invalid_credentials"}
+                self.login_limits.success(name)
             if action == "login" and self.totp.enabled(uid):
                 client["pending_totp"]=(uid,name,0)
                 return {"ok":True,"authenticated":False,"totp_required":True}
