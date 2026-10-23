@@ -89,6 +89,25 @@ class HTTPTests(unittest.TestCase):
             self.assertIsInstance(args, list)
             self.assertIn("--host", args)
 
+    def test_two_player_overlay_on_http_preview(self):
+        request = dict(self.payload, players=[
+            {"joypad_index": 0, "buttons": {"a": 1}},
+            {"joypad_index": 1, "buttons": {"a": 2}},
+        ])
+        status, body = self.request("/api/netplay/preview", request, token=self.token)
+        self.assertEqual(status, 200, body)
+        response = json.loads(body)
+        self.assertIn('input_player1_a_btn = "1"', response["controller_overlay"])
+        self.assertIn('input_player2_a_btn = "2"', response["controller_overlay"])
+
+    def test_duplicate_player_devices_rejected(self):
+        request = dict(self.payload, players=[
+            {"joypad_index": 0}, {"joypad_index": 0},
+        ])
+        status, body = self.request("/api/netplay/preview", request, token=self.token)
+        self.assertEqual(status, 400)
+        self.assertEqual(json.loads(body)["ok"], False)
+
     def test_missing_token_rejected(self):
         status, body = self.request("/api/netplay/launch", self.payload)
         self.assertEqual(status, 403)
