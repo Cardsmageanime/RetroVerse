@@ -75,3 +75,37 @@ This is a read-only input diagnostic: it does not automatically assign players o
 **Pass criteria:** (1) Two independently identified browser controllers; (2) both recognized within actual RetroArch; (3) correct control of separate local player slots; (4) after local success, a two-device Netplay session on compatible content. Only (1) can be checked by this new browser panel, and only on hardware physically connected during the test. CI simulates input and is not proof of any physical pass.
 
 The official firmware Console Edition remains deferred. RetroVerse-owned lobbies, chat, invitations and account services are separate from RetroArch gameplay/netplay.
+
+## Real-hardware two-controller verification record
+
+Automated GitHub Actions checks **cannot prove physical controller compatibility**. The new offline `hardware_test_report.py` records manual trials without requiring user details, IPs, accounts, screenshots, or ROM uploads. It never contacts a server and refuses to overwrite existing reports.
+
+Create a blank, explicitly **incomplete** trial record on the PC used for testing:
+
+```powershell
+py online/retroarch/hardware_test_report.py --platform "Windows PC" --output two-controller-trial.json
+```
+
+To record results, create your own `answers.json`, setting each item to `true` (observed pass), `false` (observed failure), or `null` (not tried):
+
+```json
+{
+  "two_gamepads_visible_in_browser": null,
+  "both_gamepads_visible_in_retroarch": null,
+  "player_1_controls_only_player_1": null,
+  "player_2_controls_only_player_2": null,
+  "analog_and_buttons_respond": null,
+  "two_device_netplay_connects": null,
+  "two_device_netplay_playable": null
+}
+```
+
+Then save a new report (choose a new filename, since overwriting is forbidden):
+
+```powershell
+py online/retroarch/hardware_test_report.py --platform "Windows PC" --answers answers.json --output two-controller-trial-results.json
+```
+
+Results are `incomplete` if anything remains untested, `failed` if any observed check fails, and `passed` only when **every** required step has been explicitly recorded as passing. For the two-device checks, use two computers with matching compatible RetroArch/core/game content on a trusted LAN. Report files live only on your computer until you explicitly share them.
+
+**Keep RetroVerse Online separate:** the real hardware report tests RetroArch as a gameplay backend. It does not constitute proof of RetroVerse friends, creator/spectator lobbies, or internet service readiness.
