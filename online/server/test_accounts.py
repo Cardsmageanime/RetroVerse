@@ -46,6 +46,7 @@ class IntegratedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await dispatch("a","friend_invite",name="Carol"))["error"],"not_friends")
         ticket=await dispatch("a","friend_invite",name="Bob")
         self.assertTrue(ticket["ok"])
+        self.assertEqual((await dispatch("c","join",room=room,invite=ticket["invite"]))["error"],"access_denied")
         self.assertEqual((await dispatch("b","join",room=room,invite=ticket["invite"]))["role"],"player")
         self.assertEqual((await dispatch("c","join",room=room,invite=ticket["invite"]))["error"],"access_denied")
         self.assertEqual((await dispatch("b","friends"))["friends"],["Alice"])
