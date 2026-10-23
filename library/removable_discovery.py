@@ -30,7 +30,7 @@ def candidates(tree):
     return sorted(set(found))
 
 def discover_mounts():
-    result=subprocess.run(["lsblk","--json","--output","NAME,RM,MOUNTPOINT","--list"],
+    result=subprocess.run(["lsblk","--json","--output","NAME,RM,MOUNTPOINT"],
                           capture_output=True,text=True,check=True,timeout=5)
     return candidates(json.loads(result.stdout))
 
