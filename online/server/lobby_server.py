@@ -11,6 +11,7 @@ import secrets
 from lobby_policy import new_room, new_invite, join_room, leave_room, visible
 from accounts import Accounts
 from sessions import SessionRegistry
+from pin_auth import PinStore
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -20,12 +21,13 @@ class LobbyServer:
     def __init__(self, account_database=":memory:"):
         self.accounts = Accounts(account_database)
         self.sessions = SessionRegistry()
+        self.pins = PinStore(self.accounts.db)
         self.rooms = {}
         self.clients = {}
 
     async def handle(self, reader, writer):
         token = secrets.token_hex(8)
-        self.clients[token] = {"name": None, "room": None, "writer": writer, "user_id": None}
+        self.clients[token] = {"name": None, "room": None, "writer": writer, "user_id": None, "pending_pin": None}
         try:
             while True:
                 try:
@@ -77,17 +79,45 @@ class LobbyServer:
             self.leave(token)
             client["user_id"] = None
             client["name"] = None
+            client["pending_pin"] = None
         if action == "logout":
             self.leave(token)
             self.sessions.revoke(token)
             client["user_id"] = None
             client["name"] = None
+            client["pending_pin"] = None
             return {"ok": True, "authenticated": False}
         if action == "session_status":
             return {"ok": True, "authenticated": self.sessions.user(token) is not None}
 
+        if action == "pin_setup":
+            uid = self.sessions.user(token)
+            if uid is None:
+                return {"ok": False, "error": "login_required"}
+            try:
+                self.pins.setup(uid, msg.get("pin"))
+            except ValueError:
+                return {"ok": False, "error": "pin_setup_rejected"}
+            return {"ok": True, "pin_enabled": True}
+        if action == "pin_verify":
+            pending = client.get("pending_pin")
+            if pending is None:
+                return {"ok": False, "error": "pin_not_pending"}
+            uid, name, attempts = pending
+            if not self.pins.verify(uid, msg.get("pin")):
+                attempts += 1
+                client["pending_pin"] = (uid, name, attempts) if attempts < 3 else None
+                return {"ok": False, "error": "pin_invalid" if attempts < 3 else "pin_attempts_exhausted"}
+            client["pending_pin"] = None
+            if action == "login" and self.pins.enabled(uid):
+                client["pending_pin"] = (uid, name, 0)
+                return {"ok": True, "authenticated": False, "pin_required": True}
+            client["name"] = name
+            client["user_id"] = uid
+            self.sessions.create(token, uid)
+            return {"ok": True, "authenticated": True, "name": name}
         if action in ("register", "login"):
-            if client.get("user_id") is not None:
+            if client.get("user_id") is not None or client.get("pending_pin") is not None:
                 return {"ok": False, "error": "already_authenticated"}
             name, password = msg.get("name"), msg.get("password")
             if action == "register":
@@ -134,7 +164,7 @@ class LobbyServer:
             room.setdefault("invite_targets", {})[invite] = target
             return {"ok": True, "invite": invite, "room": room_id, "recipient": msg["name"]}
         if action == "hello":
-            if self.sessions.user(token) is not None:
+            if self.sessions.user(token) is not None or client.get("pending_pin") is not None:
                 return {"ok": False, "error": "already_authenticated"}
             name = msg.get("name")
             if not isinstance(name, str) or not 1 <= len(name) <= 24 or not name.replace("_", "").isalnum():
