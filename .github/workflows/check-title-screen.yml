@@ -19,7 +19,9 @@ jobs:
         run: |
           node interface/title-screen/test_title_screen.cjs
           node interface/title-screen/test_startup_state.cjs
+          node interface/title-screen/test_startup_readiness.cjs
           node --check interface/title-screen/startup_state.js
+          node --check interface/title-screen/startup_readiness.js
       - name: Validate title-first graphical launcher
         run: |
           sh -n boot/tools/launch_neon_arm.sh
