@@ -57,3 +57,11 @@ The RetroVerse Netplay panel now includes independent left/right X/Y axis assign
 RetroArch's `input_analog_deadzone` is a **global setting**, not a per-player option. This change deliberately leaves it unchanged rather than pretending to support per-controller deadzones. Physical hardware detection, driver-specific mappings, real netplay playtests, and booting on the ARM GameBox remain unverified.
 
 The Console Edition remains separate and is on hold.
+
+## Physical controller identification milestone
+
+The local RetroVerse Netplay menu now has **Scan connected controllers**. It uses the browser's read-only Gamepad API to show browser controller index, reported name/family (PlayStation, Xbox, Nintendo or generic), standard mapping state, button count, pressed button numbers, and current axis values. This is intended for verifying that a physical USB/Bluetooth gamepad is visible in the *browser*. It does not install device drivers, access firmware, pair Bluetooth devices, or prove that RetroArch sees the same device.
+
+**Important:** Browser Gamepad API device indices are not guaranteed to correspond to RetroArch native joypad indices or button numbers. The diagnostic never silently assigns RetroArch joypad indices; users must verify these through RetroArch's Input settings. Some browsers require a button press and browser focus before a gamepad appears.
+
+The local service serves its diagnostic script only on loopback and runs no network upload. Xbox/PlayStation/Nintendo labels are best-effort guesses from device-reported IDs, not hardware authentication. CI tests exercise synthetic gamepad data; **physical hardware/netplay compatibility remains untested**.
