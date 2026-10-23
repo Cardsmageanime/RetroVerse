@@ -1,0 +1,50 @@
+name: Build ARM64 Linux Kernel (Experimental)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM64 kernel build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+            make bc bison flex libssl-dev libelf-dev device-tree-compiler \
+            xz-utils curl python3
+      - name: Download versioned upstream Linux sources
+        run: |
+          curl --fail --location --retry 3 \
+            https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz \
+            --output /tmp/linux-6.6.tar.xz
+          mkdir -p /tmp/retroverse-kernel
+          tar -xJf /tmp/linux-6.6.tar.xz -C /tmp/retroverse-kernel
+      - name: Compile ARM64 Image, DTBs and modules
+        run: |
+          JOBS=2 sh boot/tools/build_arm64_kernel.sh \
+            /tmp/retroverse-kernel/linux-6.6 /tmp/retroverse-build
+      - name: Make build manifest
+        run: |
+          python3 boot/tools/manifest_arm64_build.py \
+            --output /tmp/retroverse-build \
+            --source linux-6.6 \
+            --manifest "$RUNNER_TEMP/retroverse-arm64-manifest.json"
+      - name: Stage bootless kernel build artifacts
+        run: |
+          mkdir -p "$RUNNER_TEMP/retroverse-output"
+          cp /tmp/retroverse-build/arch/arm64/boot/Image "$RUNNER_TEMP/retroverse-output/Image"
+          cp "$RUNNER_TEMP/retroverse-arm64-manifest.json" "$RUNNER_TEMP/retroverse-output/manifest.json"
+          find /tmp/retroverse-build/arch/arm64/boot/dts -name '*.dtb' -print0 | \
+            tar -C /tmp/retroverse-build/arch/arm64/boot/dts --null -T - -cf "$RUNNER_TEMP/retroverse-output/dtbs.tar"
+      - name: Upload artifacts for inspection only
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroverse-arm64-linux-6.6-build-not-bootable
+          path: ${{ runner.temp }}/retroverse-output/
+          retention-days: 7
