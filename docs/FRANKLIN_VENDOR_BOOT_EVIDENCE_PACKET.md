@@ -22,9 +22,10 @@ The owner physically booted the existing EmuELEC installation from external remo
 | HDMI video | EmuELEC splash and EmulationStation rendered | Physically verified |
 | Userspace | Collections loaded; frontend reached | Physically verified |
 | RetroArch launch path | EmuELEC 4.3 launched RetroArch 1.9.8 (Git `37aa13bb47`, built 2021-10-04), found the `udev` input driver, and loaded `cannonball_libretro.so` | Core loaded and Cannonball display-calibration UI rendered; gameplay and audio not yet observed |
-| Game application | Abuse reached and rendered its title screen | Game application start verified; active gameplay not yet observed |
-| Controller | Frontend displayed “Performance Designed Products Controller disconnected” | Detection message observed; functional input unverified |
-| HDMI audio/network | Not tested | Unknown |
+| Game application | Abuse reached its title screen and responded during active play | Gameplay and controller input verified by owner observation |
+| Controller | Game control responded during the test | Functional input verified by owner observation |
+| HDMI audio | Sound heard through the TV during the game test | Verified by owner observation |
+| Network | Not tested | Unknown |
 | Repeat boot | Not tested | Unknown |
 | Android fallback with media removed | Not tested | Unknown |
 | SD read quality | Earlier Android logs showed CMD18 CRC errors; one full boot later succeeded | Reliability still unverified |
@@ -41,7 +42,7 @@ No room photographs are committed to this public repository. The record retains 
 1. Reboot with the external media still inserted and determine whether Reset is required again.
 2. Shut down, remove the media, and verify that Android starts normally.
 3. In the running reference system, capture sanitized kernel, DTB model, memory, storage, and network-interface information.
-4. Continue past the observed Cannonball core-loading screen; verify live gameplay, controller navigation, HDMI audio, clean exit, and shutdown.
+4. Verify clean game exit and system shutdown.
 5. Investigate the earlier CMD18 CRC errors before treating long-duration media access as reliable.
 6. Keep all identifiers such as MAC addresses, serial numbers, account tokens, and Wi-Fi credentials out of committed logs.
 
@@ -69,7 +70,8 @@ Do not copy the legacy EmuELEC DTB into a differently built RetroVerse kernel wi
 - [ ] Known-good Android fallback documented
 - [x] RetroArch/libretro core loaded and Cannonball calibration UI rendered
 - [x] Abuse game application reached its title screen
-- [ ] Live gameplay, controller input, HDMI audio, clean exit, and shutdown tested
+- [x] Live gameplay, controller input, and HDMI audio tested
+- [ ] Clean game exit and shutdown tested
 - [ ] SD CRC/reliability diagnosis recorded
 - [ ] RetroVerse candidate contents independently reviewed
 - [ ] Physical RetroVerse boot completed
