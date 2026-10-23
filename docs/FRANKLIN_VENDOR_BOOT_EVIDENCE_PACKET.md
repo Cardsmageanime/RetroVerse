@@ -1,7 +1,7 @@
 # Franklin vendor U-Boot external-boot evidence packet
 
-**Milestone:** B — establish an evidence-based external boot path before building a RetroVerse image.  
-**Status (2026-10-23): REFERENCE BOOT CONFIRMED / RETROVERSE BOOT PENDING.**  
+**Milestone:** B — establish an evidence-based external boot path before building a RetroVerse image.
+**Status (2026-10-23): REFERENCE BOOT CONFIRMED / RETROVERSE BOOT PENDING.**
 **Scope:** Vayava GameBox, Android board `franklin`, firmware DT selector `g12a_u212_2g`, observed U-Boot `2015.01-g51e6fd64e9-dirty`.
 
 The owner physically booted the existing EmuELEC installation from external removable media using the recovery/reset trigger. This establishes that the installed firmware can start a compatible external ARM system. Exact U-Boot commands and a RetroVerse-built boot remain unverified.
