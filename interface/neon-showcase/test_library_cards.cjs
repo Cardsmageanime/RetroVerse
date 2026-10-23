@@ -1,0 +1,10 @@
+const assert=require("node:assert/strict"),fs=require("node:fs");
+const cards=require("./library_cards.js");
+let result=cards.clean({title:"Example",system:"SNES",year:1994,description:"A game",cover:"https://external/image.png"});
+assert.equal(result.title,"Example");assert.equal(result.cover,null);assert.equal(result.year,1994);
+assert.equal(cards.clean({year:"1994",cover:"javascript:alert(1)"}).year,null);
+assert.equal(cards.clean({cover:"data:image/png;base64,aGVsbG8="}).cover,"data:image/png;base64,aGVsbG8=");
+const html=fs.readFileSync("interface/neon-showcase/index.html","utf8");
+assert.match(html,/id="library-metadata"/);assert.match(html,/RetroVerseLibraryCards\.render/);
+assert.match(html,/retroverse-metadata-v1/);
+console.log("Offline game-library card and metadata checks passed");
