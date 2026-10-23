@@ -48,6 +48,10 @@ def handler_factory(token, port):
             self._send(status, json.dumps(obj).encode(), "application/json; charset=utf-8")
 
         def do_GET(self):
+            # Reject DNS-rebinding hosts before serving the session-bearing page.
+            if self.headers.get("Host") != f"127.0.0.1:{port}":
+                self._json(403, {"ok": False, "error": "host_rejected"})
+                return
             path = urlsplit(self.path).path
             if path == "/":
                 page = NEON
