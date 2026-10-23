@@ -24,6 +24,7 @@ class TotpStore:
         self.db=db
         self.clock=clock or time.time
         db.execute("CREATE TABLE IF NOT EXISTS totp (user_id INTEGER PRIMARY KEY, secret TEXT NOT NULL, last_step INTEGER NOT NULL DEFAULT -1, FOREIGN KEY(user_id) REFERENCES users(id))")
+        db.execute("CREATE TABLE IF NOT EXISTS pending_totp (user_id INTEGER PRIMARY KEY, secret TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id))")
         db.commit()
     def enabled(self,uid):
         return self.db.execute("SELECT 1 FROM totp WHERE user_id=?",(uid,)).fetchone() is not None
@@ -31,8 +32,20 @@ class TotpStore:
         if self.enabled(uid):raise ValueError("already enrolled")
         secret=make_secret()
         with self.db:
-            self.db.execute("INSERT INTO totp(user_id,secret) VALUES(?,?)",(uid,secret))
+            self.db.execute("INSERT INTO pending_totp(user_id,secret) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET secret=excluded.secret",(uid,secret))
         return secret
+
+    def confirm(self,uid,provided):
+        row=self.db.execute("SELECT secret FROM pending_totp WHERE user_id=?",(uid,)).fetchone()
+        if row is None or not isinstance(provided,str) or len(provided)!=6 or not provided.isascii() or not provided.isdigit():
+            return False
+        step=int(self.clock()//30)
+        if not any(hmac.compare_digest(code(row[0],n),provided) for n in (step-1,step,step+1) if n>=0):
+            return False
+        with self.db:
+            self.db.execute("INSERT INTO totp(user_id,secret,last_step) VALUES(?,?,?)",(uid,row[0],step))
+            self.db.execute("DELETE FROM pending_totp WHERE user_id=?",(uid,))
+        return True
     def verify(self,uid,provided):
         if not isinstance(provided,str) or len(provided)!=6 or not provided.isascii() or not provided.isdigit():return False
         row=self.db.execute("SELECT secret,last_step FROM totp WHERE user_id=?",(uid,)).fetchone()
