@@ -10,7 +10,7 @@
   "external_uboot_boot_path_scope": "A vendor recovery/reset-triggered external boot reached EmuELEC and EmulationStation. Exact U-Boot commands, MMC numbering, and load addresses remain unobserved.",
   "android_internal_storage_untouched": false,
   "android_fallback_after_media_removal_verified": false,
-  "notes": "On 2026-10-23, the owner completed a physical external-media boot of the existing EmuELEC installation on the Vayava/Franklin box. HDMI video, the EmuELEC splash, EmulationStation collection loading, the frontend, and a RetroArch/libretro launch path Cannonball display-calibration UI, and the Abuse title screen were observed. This verifies a compatible reference OS external boot path; it is not proof that a RetroVerse-built kernel, DTB, initramfs, or root filesystem boots. android_internal_storage_untouched=false records that fallback to Android after media removal has not yet been independently verified, not evidence of modification.",
+  "notes": "On 2026-10-23, the owner completed a physical external-media boot of the existing EmuELEC installation on the Vayava/Franklin box. HDMI video, the EmuELEC splash, EmulationStation collection loading, the frontend, a RetroArch/libretro launch path, Cannonball display-calibration UI, the Abuse title screen, active game control, and HDMI audio were observed. This verifies a compatible reference OS external boot and gameplay path; it is not proof that a RetroVerse-built kernel, DTB, initramfs, or root filesystem boots. android_internal_storage_untouched=false records that fallback to Android after media removal has not yet been independently verified, not evidence of modification.",
   "reference_os_boot": {
     "verified": true,
     "observed_date": "2026-10-23",
@@ -34,15 +34,16 @@
       "gameplay_verified": false,
       "cannonball_calibration_ui_reached": true
     },
-    "controller_function_verified": false,
-    "hdmi_audio_verified": false,
+    "controller_function_verified": true,
+    "hdmi_audio_verified": true,
     "network_verified": false,
     "repeat_boot_verified": false,
     "game_application": {
       "title": "Abuse",
       "title_screen_rendered": true,
-      "active_gameplay_verified": false
-    }
+      "active_gameplay_verified": true
+    },
+    "gameplay_verified": true
   },
   "windows_hash_readback_passed": true,
   "windows_hash_readback_test_bytes": 268435456,
