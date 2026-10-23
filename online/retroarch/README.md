@@ -40,3 +40,30 @@ Select Host, Join, or Spectate; enter the **locally installed** libretro core pa
 The server listens only on `127.0.0.1`, checks HTTP origin/host and a per-process request token, and has no cross-origin API access. Do not bypass these restrictions or run the service exposed on a public network. It does not install RetroArch, locate game files automatically, find online strangers, forward router ports, or authenticate players. Game content and cores are never uploaded by this service.
 
 Use two properly configured devices with compatible RetroArch cores and legally obtained matching game files to verify real netplay. Note that spectating support and flags can vary by RetroArch/core versions and host settings. Verification of the UI controller code is **not proof of successful two-device gameplay**.
+
+## Two-PC hardware test — preflight before launch
+
+A **read-only diagnostic** is included. On *each* PC, using its own installed core and its own copy of the same legally obtained game, run:
+
+```powershell
+py online/retroarch/netplay_preflight.py --core "C:\\RetroArch\\cores\\your_core.dll" --content "C:\\Games\\your_game.rom"
+```
+
+Compare **core_sha256** and **content_sha256** on the two PCs; matching hashes are useful evidence of file identity. When files differ, confirm the same RetroArch version, compatible core builds, and identical game content. Exact hashes of cross-platform core binaries may legitimately differ between Windows and ARM Linux; compare core identity/version there instead. SHA-256 does not prove runtime compatibility.
+
+On the **joining** PC, after launching RetroArch's host netplay and allowing it to listen on the LAN, check the host's local IP address:
+
+```powershell
+py online/retroarch/netplay_preflight.py --core "C:\\RetroArch\\cores\\your_core.dll" --content "C:\\Games\\your_game.rom" --peer 192.168.1.20 --port 55435
+```
+
+A successful **peer_test.reachable** value only shows that a TCP connection reached the selected port; it **does not prove** RetroArch is actually responding, that the core/game match, or that inputs synchronize. A failed port check can indicate networking or firewall trouble. The script neither changes firewall rules nor opens router ports.
+
+Run Host through RetroVerse's local Netplay interface on the first PC, then Join using that host IP from the second PC. Observe both players entering the same supported local-multiplayer game; verify that player inputs and game states agree. Record the results and RetroArch/core versions before calling netplay verified. Use a trusted private LAN before attempting Internet testing.
+
+## Hardware validation status
+
+- Netplay launcher and local HTTP controller: code implemented, automated checks committed.
+- Network preflight: implemented, automated tests committed.
+- Two-PC RetroArch game session: **not yet verified**.
+- ARM Vayava GameBox display, RetroArch game launch and netplay session: **not yet verified**.
