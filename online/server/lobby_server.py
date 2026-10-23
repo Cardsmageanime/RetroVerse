@@ -8,6 +8,7 @@ import argparse
 import asyncio
 import json
 import secrets
+from lobby_policy import new_room, new_invite, join_room, leave_room, visible
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
@@ -53,9 +54,14 @@ class LobbyServer:
     def leave(self, token):
         previous = self.clients[token]["room"]
         if previous and previous in self.rooms:
-            members = self.rooms[previous]["members"]
-            members.discard(token)
-            if not members:
+            room = self.rooms[previous]
+            if token == room["owner"]:
+                # Close host's ephemeral room and clear every member's assignment.
+                for member in room["members"] | room["spectators"]:
+                    if member in self.clients:
+                        self.clients[member]["room"] = None
+                del self.rooms[previous]
+            elif leave_room(room, token):
                 del self.rooms[previous]
         self.clients[token]["room"] = None
 
@@ -69,7 +75,7 @@ class LobbyServer:
             client["name"] = name
             return {"ok": True, "name": name, "protocol": 1}
         if action == "list":
-            return {"ok": True, "rooms": [{"id": key, "name": value["name"], "players": len(value["members"]), "max_players": MAX_MEMBERS} for key, value in sorted(self.rooms.items())]}
+            return {"ok": True, "rooms": [{"id": key, "name": value["name"], "kind": value["kind"], "players": len(value["members"]), "spectators": len(value["spectators"]), "max_players": MAX_MEMBERS} for key, value in sorted(self.rooms.items()) if visible(value, token)]}
         if client["name"] is None:
             return {"ok": False, "error": "hello_required"}
         if action == "create":
@@ -80,20 +86,52 @@ class LobbyServer:
                 return {"ok": False, "error": "room_limit"}
             self.leave(token)
             room_id = secrets.token_hex(4)
-            self.rooms[room_id] = {"name": name, "members": {token}}
+            try:
+                room = new_room(name, token, msg.get("kind", "public"))
+            except ValueError:
+                return {"ok": False, "error": "invalid_kind"}
+            self.rooms[room_id] = room
             client["room"] = room_id
             return {"ok": True, "room": room_id}
+        if action == "invite":
+            rid = client["room"]
+            if not rid or rid not in self.rooms:
+                return {"ok": False, "error": "not_in_room"}
+            try:
+                return {"ok": True, "invite": new_invite(self.rooms[rid], token)}
+            except PermissionError:
+                return {"ok": False, "error": "host_only"}
         if action == "join":
-            room_id = msg.get("room")
-            if not isinstance(room_id, str) or room_id not in self.rooms:
+            rid = msg.get("room")
+            if not isinstance(rid, str) or rid not in self.rooms:
                 return {"ok": False, "error": "room_not_found"}
-            if len(self.rooms[room_id]["members"]) >= MAX_MEMBERS and token not in self.rooms[room_id]["members"]:
+            room = self.rooms[rid]
+            role = msg.get("role", "player")
+            # Validate before leaving the current room, so rejected joins are safe.
+            try:
+                if role not in ("player", "spectator"):
+                    raise ValueError("invalid role")
+                if role == "spectator" and room["kind"] == "creator":
+                    raise PermissionError("spectator not available")
+                if room["kind"] != "public" and token not in room["members"] and token not in room["spectators"] and msg.get("invite") not in room["invites"]:
+                    raise PermissionError("invite required")
+                target = room["members"] if role == "player" else room["spectators"]
+                if token not in target and len(target) >= MAX_MEMBERS:
+                    raise OverflowError("room full")
+            except ValueError:
+                return {"ok": False, "error": "invalid_role"}
+            except PermissionError:
+                return {"ok": False, "error": "access_denied"}
+            except OverflowError:
                 return {"ok": False, "error": "room_full"}
-            if client["room"] != room_id:
+            if client["room"] != rid:
                 self.leave(token)
-                self.rooms[room_id]["members"].add(token)
-                client["room"] = room_id
-            return {"ok": True, "room": room_id}
+            try:
+                join_room(room, token, role, msg.get("invite"), MAX_MEMBERS, MAX_MEMBERS)
+            except (ValueError, PermissionError, OverflowError):
+                return {"ok": False, "error": "join_rejected"}
+            client["room"] = rid
+            return {"ok": True, "room": rid, "role": role}
         if action == "leave":
             self.leave(token)
             return {"ok": True}
@@ -104,14 +142,16 @@ class LobbyServer:
             if not isinstance(text, str) or not 1 <= len(text) <= 240 or any(ord(c) < 32 for c in text):
                 return {"ok": False, "error": "invalid_message"}
             room = self.rooms[client["room"]]
+            if token in room["spectators"]:
+                return {"ok": False, "error": "spectator_read_only"}
             event = {"event": "chat", "room": client["room"], "from": client["name"], "text": text}
-            for member in list(room["members"]):
+            for member in list(room["members"] | room["spectators"]):
                 if member != token and member in self.clients:
                     try:
                         await self.send(self.clients[member]["writer"], event)
                     except (ConnectionError, OSError):
                         pass
-            return {"ok": True, "delivered": max(len(room["members"]) - 1, 0)}
+            return {"ok": True, "delivered": max(len(room["members"] | room["spectators"]) - 1, 0)}
         return {"ok": False, "error": "unknown_action"}
 
 async def serve(host, port):
