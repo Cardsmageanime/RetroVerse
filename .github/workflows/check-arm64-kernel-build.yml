@@ -4,6 +4,8 @@ on:
     paths:
       - 'boot/tools/build_arm64_kernel.sh'
       - 'boot/KERNEL_BUILD.md'
+      - 'boot/tools/manifest_arm64_build.py'
+      - 'boot/tools/test_manifest_arm64_build.py'
       - '.github/workflows/check-arm64-kernel-build.yml'
   workflow_dispatch:
 jobs:
@@ -21,3 +23,7 @@ jobs:
             echo "Expected usage failure" >&2
             exit 1
           fi
+      - name: Verify generated artifact manifest logic
+        run: |
+          python3 -m unittest discover -s boot/tools -p 'test_manifest_arm64_build.py' -v
+          python3 -m py_compile boot/tools/manifest_arm64_build.py
