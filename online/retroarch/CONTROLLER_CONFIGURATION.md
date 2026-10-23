@@ -43,3 +43,9 @@ The local server keeps this overlay in a unique temporary directory until the Re
 This first visual integration sets controller indices and A-button bindings only; the standalone JSON exporter still supports the wider set of RetroArch button mappings. The displayed Xbox, PlayStation, and Switch choices are **browser-standard suggestions**, not detected native RetroArch autoconfig hardware mappings. The operator must confirm indices in the actual RetroArch Input settings.
 
 No real gamepad compatibility or physical GameBox test has yet been demonstrated.
+
+## Full visual digital-button editor
+
+The Netplay menu now offers editable indices for all 16 digital RetroPad inputs for **each of two players**: A/B/X/Y, Start/Select, D-pad, L/R, L2/R2, and L3/R3. Use **Reset to standard mapping** to restore sample assignments, then **Validate & Preview** to see the generated overlay. RetroArch joypad button indices and browser Gamepad API button indices are not always the same.
+
+**Scope:** This milestone does *not* yet remap analog-stick axes in RetroArch, automatically detect native joypad indices, or verify physical controllers. Testing remains required for each actual platform and driver. These assignments are optional and only used when controller overrides are enabled.
