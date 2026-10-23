@@ -270,10 +270,18 @@ class LobbyServer:
             client["user_id"] = uid
             self.sessions.create(token, uid)
             return {"ok": True, "name": name, "authenticated": True}
-        if action in ("friend_code", "friend_request", "friend_accept", "friend_requests", "friends", "friend_invite"):
+        if action in ("friend_code", "friend_code_rotate", "friend_request", "friend_accept", "friend_requests", "friends", "friend_invite", "public_friend_request", "public_friend_accept", "public_friend_requests", "public_friends", "friend_remove", "public_friend_remove"):
             uid = self.sessions.user(token)
             if uid is None:
                 return {"ok": False, "error": "login_required"}
+            if action == "public_friends":
+                return {"ok": True, "friends": self.accounts.public_friends(uid)}
+            if action == "public_friend_requests":
+                return {"ok": True, "requests": self.accounts.public_requests(uid)}
+            if action == "friend_code_rotate":
+                if self.accounts.authenticate(client.get("name"),msg.get("password")) != uid:
+                    return {"ok": False, "error": "reauth_required"}
+                return {"ok": True, "code": self.accounts.rotate_friend_code(uid)}
             if action == "friends":
                 return {"ok": True, "friends": self.accounts.friends(uid)}
             if action == "friend_code":
@@ -283,6 +291,21 @@ class LobbyServer:
             target = self.accounts.find_by_friend_code(msg.get("code")) if action == "friend_request" else self.accounts.find(msg.get("name"))
             if target is None or target == uid:
                 return {"ok": False, "error": "invalid_friend"}
+            if action == "public_friend_request":
+                try:
+                    self.accounts.request_public_friend(uid,target)
+                    return {"ok": True}
+                except ValueError:
+                    return {"ok": False, "error": "request_rejected"}
+            if action == "public_friend_accept":
+                try:
+                    self.accounts.accept_public_friend(uid,target)
+                    return {"ok": True}
+                except ValueError:
+                    return {"ok": False, "error": "no_pending_request"}
+            if action in ("friend_remove","public_friend_remove"):
+                self.accounts.remove_friend(uid,target,private=(action=="friend_remove"))
+                return {"ok": True}
             if action == "friend_request":
                 try:
                     self.accounts.request_friend(uid, target)
