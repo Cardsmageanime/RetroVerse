@@ -21,6 +21,7 @@ The owner physically booted the existing EmuELEC installation from external remo
 | Reference system | `SYSTEM` MD5 `23c4fd1c5bb43cb4099107e24ed60fd0` | Matches supplied checksum |
 | HDMI video | EmuELEC splash and EmulationStation rendered | Physically verified |
 | Userspace | Collections loaded; frontend reached | Physically verified |
+| RetroArch launch path | EmuELEC 4.3 launched RetroArch 1.9.8 (Git `37aa13bb47`, built 2021-10-04), found the `udev` input driver, and loaded `cannonball_libretro.so` | Core-loading path verified; gameplay and audio not yet observed |
 | Controller | Frontend displayed “Performance Designed Products Controller disconnected” | Detection message observed; functional input unverified |
 | HDMI audio/network | Not tested | Unknown |
 | Repeat boot | Not tested | Unknown |
@@ -39,7 +40,7 @@ No room photographs are committed to this public repository. The record retains 
 1. Reboot with the external media still inserted and determine whether Reset is required again.
 2. Shut down, remove the media, and verify that Android starts normally.
 3. In the running reference system, capture sanitized kernel, DTB model, memory, storage, and network-interface information.
-4. Test controller navigation, HDMI audio, clean shutdown, and one game launch/exit.
+4. Continue past the observed Cannonball core-loading screen; verify live gameplay, controller navigation, HDMI audio, clean exit, and shutdown.
 5. Investigate the earlier CMD18 CRC errors before treating long-duration media access as reliable.
 6. Keep all identifiers such as MAC addresses, serial numbers, account tokens, and Wi-Fi credentials out of committed logs.
 
@@ -65,7 +66,8 @@ Do not copy the legacy EmuELEC DTB into a differently built RetroVerse kernel wi
 - [ ] Exact U-Boot command path and MMC mapping captured
 - [ ] Repeat external boot documented
 - [ ] Known-good Android fallback documented
-- [ ] Controller, HDMI audio, and clean shutdown tested
+- [x] RetroArch/libretro game-launch path reached
+- [ ] Live gameplay, controller input, HDMI audio, clean exit, and shutdown tested
 - [ ] SD CRC/reliability diagnosis recorded
 - [ ] RetroVerse candidate contents independently reviewed
 - [ ] Physical RetroVerse boot completed
