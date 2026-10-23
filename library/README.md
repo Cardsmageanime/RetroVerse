@@ -41,3 +41,27 @@ RETROVERSE_DRIVE_PICKER=1 sh boot/tools/launch_neon_arm.sh
 RetroVerse opens its title screen. Choose **Start** or **Offline Mode**, open **Game Library**, and use **Find drives**. The selector lists *candidate ROM directories from already-mounted removable devices*, and **Scan selected drive** is an explicit choice. Paths are rechecked against current removable-device candidates by the local server before scanning. The service never mounts a disk, writes to ROM files, edits saves, or accesses Android's internal storage intentionally.
 
 This is still a Linux desktop prototype; GameBox boot, actual SD/USB enumeration, native file permissions and platform support are unverified. Never expose this localhost development service to a network or forward its port.
+
+
+## Offline artwork and metadata (prototype)
+
+The Game Library now displays game cards, with optional descriptions, years and embedded cover art. To enrich scanned games, choose **Import offline game metadata** and select a local JSON file formatted as:
+
+```json
+{
+  "format": "retroverse-metadata-v1",
+  "entries": [
+    {
+      "relative_path": "SNES/My Game.sfc",
+      "title": "My Game",
+      "year": 1994,
+      "description": "Optional local description",
+      "cover": "data:image/png;base64,aGVsbG8="
+    }
+  ]
+}
+```
+
+The `relative_path` must match the scanned library index. The cover field accepts embedded PNG, JPEG or WebP base64 data only (limited to 200 KB of encoded text per cover); HTTP images and scripts are disallowed. Replace the illustrative base64 value with valid image data. The catalog is processed locally in the browser and is not uploaded or stored persistently. Without metadata, cards display game titles and systems without cover images. Games, ROMs and saves remain unmodified.
+
+This is a metadata *import and display* milestone, not automatic artwork scraping/download or recognition of actual game releases.
