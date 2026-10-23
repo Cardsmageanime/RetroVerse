@@ -28,6 +28,7 @@ class LobbyServer:
         self.totp = TotpStore(self.accounts.db)
         self.recovery = RecoveryStore(self.accounts.db)
         self.login_limits = AttemptLimiter()
+        self.factor_limits = AttemptLimiter(limit=5, window=300)
         self.rooms = {}
         self.clients = {}
 
@@ -124,14 +125,20 @@ class LobbyServer:
                 return {"ok":False,"error":"reauth_required"}
             values=self.recovery.create(uid)
             return {"ok":True,"codes":values,"remaining":len(values)}
+        if action in ("recovery_verify", "totp_verify", "pin_verify"):
+            pending = client.get("pending_pin") if action == "pin_verify" else client.get("pending_totp")
+            if pending is not None and (self.factor_limits.saturated() or self.factor_limits.blocked(str(pending[0]))):
+                return {"ok":False,"error":"factor_throttled"}
         if action == "recovery_verify":
             pending=client.get("pending_totp")
             if pending is None:return {"ok":False,"error":"recovery_not_pending"}
             uid,name,attempts=pending
             if not self.recovery.use(uid,msg.get("code")):
+                self.factor_limits.failure(str(uid))
                 attempts+=1
                 client["pending_totp"]=(uid,name,attempts) if attempts<3 else None
                 return {"ok":False,"error":"recovery_invalid" if attempts<3 else "recovery_attempts_exhausted"}
+            self.factor_limits.success(str(uid))
             client["pending_totp"]=None
             if self.pins.enabled(uid):
                 client["pending_pin"]=(uid,name,0)
@@ -145,9 +152,11 @@ class LobbyServer:
             if pending is None:return {"ok":False,"error":"totp_not_pending"}
             uid,name,attempts=pending
             if not self.totp.verify(uid,msg.get("code")):
+                self.factor_limits.failure(str(uid))
                 attempts+=1
                 client["pending_totp"]=(uid,name,attempts) if attempts<3 else None
                 return {"ok":False,"error":"totp_invalid" if attempts<3 else "totp_attempts_exhausted"}
+            self.factor_limits.success(str(uid))
             client["pending_totp"]=None
             if self.pins.enabled(uid):
                 client["pending_pin"]=(uid,name,0)
@@ -171,9 +180,11 @@ class LobbyServer:
                 return {"ok": False, "error": "pin_not_pending"}
             uid, name, attempts = pending
             if not self.pins.verify(uid, msg.get("pin")):
+                self.factor_limits.failure(str(uid))
                 attempts += 1
                 client["pending_pin"] = (uid, name, attempts) if attempts < 3 else None
                 return {"ok": False, "error": "pin_invalid" if attempts < 3 else "pin_attempts_exhausted"}
+            self.factor_limits.success(str(uid))
             client["pending_pin"] = None
             client["name"] = name
             client["user_id"] = uid
