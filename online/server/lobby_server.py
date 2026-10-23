@@ -84,12 +84,12 @@ class LobbyServer:
                 return {"ok": False, "error": "invalid_room"}
             if len(self.rooms) >= MAX_ROOMS:
                 return {"ok": False, "error": "room_limit"}
-            self.leave(token)
-            room_id = secrets.token_hex(4)
             try:
                 room = new_room(name, token, msg.get("kind", "public"))
             except ValueError:
                 return {"ok": False, "error": "invalid_kind"}
+            self.leave(token)
+            room_id = secrets.token_hex(4)
             self.rooms[room_id] = room
             client["room"] = room_id
             return {"ok": True, "room": room_id}
@@ -113,7 +113,7 @@ class LobbyServer:
                     raise ValueError("invalid role")
                 if role == "spectator" and room["kind"] == "creator":
                     raise PermissionError("spectator not available")
-                if room["kind"] != "public" and token not in room["members"] and token not in room["spectators"] and msg.get("invite") not in room["invites"]:
+                if room["kind"] != "public" and token not in room["members"] and token not in room["spectators"] and (not isinstance(msg.get("invite"), str) or msg.get("invite") not in room["invites"]):
                     raise PermissionError("invite required")
                 target = room["members"] if role == "player" else room["spectators"]
                 if token not in target and len(target) >= MAX_MEMBERS:
