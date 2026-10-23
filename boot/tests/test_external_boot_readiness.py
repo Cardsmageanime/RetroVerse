@@ -34,11 +34,18 @@ class ReadinessTests(unittest.TestCase):
         self.assertTrue(any("gamebox_sd_link_reliability_verified" in x for x in result["findings"]))
 
     def test_even_full_evidence_never_authorizes_flashing(self):
-        all_evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        all_evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES, "android_internal_storage_untouched")}
         result = module.evaluate(PROFILE, all_evidence)
         self.assertEqual(result["readiness"], "candidate-for-controlled-boot-planning")
         self.assertFalse(result["can_flash"])
         self.assertFalse(result["can_claim_successful_boot"])
+
+    def test_unverified_internal_storage_blocks_planning(self):
+        evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        evidence["android_internal_storage_untouched"] = False
+        result = module.evaluate(PROFILE, evidence)
+        self.assertEqual(result["readiness"], "research-only")
+        self.assertTrue(any("android_internal_storage_untouched" in x for x in result["findings"]))
 
     def test_wrong_board_profile_blocks_planning(self):
         result = module.evaluate({**PROFILE, "android_amlogic_dt_id_observed": "different"}, EVIDENCE)
