@@ -442,7 +442,7 @@ class LobbyServer:
                 return {"ok": False, "error": "spectator_read_only"}
             if room["kind"] == "friends":
                 uid=self.sessions.user(token)
-                if uid is None or not self.accounts.are_friends(uid,room.get("owner_uid")):
+                if uid is None or (token != room["owner"] and not self.accounts.are_friends(uid,room.get("owner_uid"))):
                     return {"ok":False,"error":"friends_only"}
             event = {"event": "chat", "room": client["room"], "from": client["name"], "text": text}
             for member in list(room["members"] | room["spectators"]):
