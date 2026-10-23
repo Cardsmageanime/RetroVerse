@@ -11,6 +11,6 @@ const profiles=Object.freeze({
  custom:{label:"Custom",mapping:{...standard}}
 });
 function detect(id){const s=String(id||"").toLowerCase();if(/xbox|xinput|045e/.test(s))return "xbox";if(/dualshock|dualsense|playstation|054c|sony/.test(s))return "playstation";if(/switch|joy-con|nintendo|057e/.test(s))return "switch";return "standard";}
-function create(name,override){const preset=profiles[name];if(!preset)throw Error("Unknown profile");const merged={...preset.mapping,...(override||{})};if(typeof root.RetroVerseTwoPlayer!=="undefined")return root.RetroVerseTwoPlayer.validateMapping(merged);return merged;}
+function create(name,override){const preset=profiles[name];if(!preset)throw Error("Unknown profile");const merged={...preset.mapping,...(override||{})};return merged;}
 return {profiles,detect,create};
 });
