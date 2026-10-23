@@ -47,6 +47,19 @@ class ReadinessTests(unittest.TestCase):
         self.assertEqual(result["readiness"], "research-only")
         self.assertTrue(any("android_internal_storage_untouched" in x for x in result["findings"]))
 
+    def test_missing_internal_storage_evidence_blocks_planning(self):
+        evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        result = module.evaluate(PROFILE, evidence)
+        self.assertEqual(result["readiness"], "research-only")
+        self.assertTrue(any("android_internal_storage_untouched" in x for x in result["findings"]))
+
+    def test_string_truthy_internal_storage_evidence_is_rejected(self):
+        evidence = {key: True for key in (*module.REQUIRED_GATES, *module.STORAGE_GATES)}
+        evidence["android_internal_storage_untouched"] = "true"
+        result = module.evaluate(PROFILE, evidence)
+        self.assertEqual(result["readiness"], "research-only")
+        self.assertFalse(result["can_flash"])
+
     def test_wrong_board_profile_blocks_planning(self):
         result = module.evaluate({**PROFILE, "android_amlogic_dt_id_observed": "different"}, EVIDENCE)
         self.assertEqual(result["readiness"], "research-only")
