@@ -32,7 +32,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(raw)
             return
         if path=="/":
-            self.path="/interface/title-screen/index.html"
+            self.send_response(302)
+            self.send_header("Location","/interface/title-screen/index.html")
+            self.end_headers()
+            return
         elif path=="/showcase":
             self.path="/interface/neon-showcase/index.html"
         elif not path.startswith(("/interface/","/library/")):
