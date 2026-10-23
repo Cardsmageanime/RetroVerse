@@ -25,5 +25,12 @@ jobs:
           python-version: '3.12'
       - name: Compile RetroArch bridge
         run: python -m py_compile online/retroarch/netplay_bridge.py online/retroarch/netplay_ui_server.py online/retroarch/controller_config.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify controller detection JavaScript
+        run: |
+          node --check online/retroarch/gamepad_diagnostics.js
+          node online/retroarch/test_gamepad_diagnostics.cjs
       - name: Verify host join spectator commands and invalid input
         run: python -m unittest discover -s online/retroarch -p 'test_*.py' -v
