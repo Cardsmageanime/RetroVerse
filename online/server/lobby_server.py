@@ -9,19 +9,21 @@ import asyncio
 import json
 import secrets
 from lobby_policy import new_room, new_invite, join_room, leave_room, visible
+from accounts import Accounts
 
 MAX_LINE = 4096
 MAX_ROOMS = 32
 MAX_MEMBERS = 8
 
 class LobbyServer:
-    def __init__(self):
+    def __init__(self, account_database=":memory:"):
+        self.accounts = Accounts(account_database)
         self.rooms = {}
         self.clients = {}
 
     async def handle(self, reader, writer):
         token = secrets.token_hex(8)
-        self.clients[token] = {"name": None, "room": None, "writer": writer}
+        self.clients[token] = {"name": None, "room": None, "writer": writer, "user_id": None}
         try:
             while True:
                 try:
@@ -68,6 +70,50 @@ class LobbyServer:
     async def dispatch(self, token, msg):
         action = msg.get("action")
         client = self.clients[token]
+        if action in ("register", "login"):
+            if client.get("user_id") is not None:
+                return {"ok": False, "error": "already_authenticated"}
+            name, password = msg.get("name"), msg.get("password")
+            if action == "register":
+                try:
+                    uid = self.accounts.register(name, password)
+                except ValueError:
+                    return {"ok": False, "error": "registration_rejected"}
+            else:
+                uid = self.accounts.authenticate(name, password)
+                if uid is None:
+                    return {"ok": False, "error": "invalid_credentials"}
+            client["name"] = name
+            client["user_id"] = uid
+            return {"ok": True, "name": name, "authenticated": True}
+        if action in ("friend_request", "friend_accept", "friends", "friend_invite"):
+            uid = client.get("user_id")
+            if uid is None:
+                return {"ok": False, "error": "login_required"}
+            if action == "friends":
+                return {"ok": True, "friends": self.accounts.friends(uid)}
+            target = self.accounts.find(msg.get("name"))
+            if target is None or target == uid:
+                return {"ok": False, "error": "invalid_friend"}
+            if action == "friend_request":
+                try:
+                    self.accounts.request_friend(uid, target)
+                    return {"ok": True}
+                except ValueError:
+                    return {"ok": False, "error": "request_rejected"}
+            if action == "friend_accept":
+                try:
+                    self.accounts.accept_friend(uid, target)
+                    return {"ok": True}
+                except ValueError:
+                    return {"ok": False, "error": "no_pending_request"}
+            room_id = client["room"]
+            if not room_id or room_id not in self.rooms or self.rooms[room_id]["owner"] != token:
+                return {"ok": False, "error": "host_only"}
+            if not self.accounts.are_friends(uid, target):
+                return {"ok": False, "error": "not_friends"}
+            invite = new_invite(self.rooms[room_id], token)
+            return {"ok": True, "invite": invite, "room": room_id, "recipient": msg["name"]}
         if action == "hello":
             name = msg.get("name")
             if not isinstance(name, str) or not 1 <= len(name) <= 24 or not name.replace("_", "").isalnum():
