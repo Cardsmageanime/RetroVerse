@@ -29,7 +29,9 @@ jobs:
         with:
           node-version: '22'
       - name: Verify two-player controller mapping
-        run: node online/gameplay/test_two_player_input.cjs
+        run: |
+          node online/gameplay/test_two_player_input.cjs
+          node online/gameplay/test_controller_profiles.cjs
       - name: Verify gameplay client JavaScript syntax
         run: node --check online/gameplay/two_player_input.js
       - name: Validate launcher shell syntax
