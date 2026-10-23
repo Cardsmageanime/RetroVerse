@@ -22,6 +22,7 @@ The owner physically booted the existing EmuELEC installation from external remo
 | HDMI video | EmuELEC splash and EmulationStation rendered | Physically verified |
 | Userspace | Collections loaded; frontend reached | Physically verified |
 | RetroArch launch path | EmuELEC 4.3 launched RetroArch 1.9.8 (Git `37aa13bb47`, built 2021-10-04), found the `udev` input driver, and loaded `cannonball_libretro.so` | Core loaded and Cannonball display-calibration UI rendered; gameplay and audio not yet observed |
+| Game application | Abuse reached and rendered its title screen | Game application start verified; active gameplay not yet observed |
 | Controller | Frontend displayed “Performance Designed Products Controller disconnected” | Detection message observed; functional input unverified |
 | HDMI audio/network | Not tested | Unknown |
 | Repeat boot | Not tested | Unknown |
@@ -67,6 +68,7 @@ Do not copy the legacy EmuELEC DTB into a differently built RetroVerse kernel wi
 - [ ] Repeat external boot documented
 - [ ] Known-good Android fallback documented
 - [x] RetroArch/libretro core loaded and Cannonball calibration UI rendered
+- [x] Abuse game application reached its title screen
 - [ ] Live gameplay, controller input, HDMI audio, clean exit, and shutdown tested
 - [ ] SD CRC/reliability diagnosis recorded
 - [ ] RetroVerse candidate contents independently reviewed
