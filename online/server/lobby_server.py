@@ -112,7 +112,9 @@ class LobbyServer:
                 return {"ok": False, "error": "host_only"}
             if not self.accounts.are_friends(uid, target):
                 return {"ok": False, "error": "not_friends"}
-            invite = new_invite(self.rooms[room_id], token)
+            room = self.rooms[room_id]
+            invite = new_invite(room, token)
+            room.setdefault("invite_targets", {})[invite] = target
             return {"ok": True, "invite": invite, "room": room_id, "recipient": msg["name"]}
         if action == "hello":
             name = msg.get("name")
@@ -161,6 +163,10 @@ class LobbyServer:
                     raise PermissionError("spectator not available")
                 if room["kind"] != "public" and token not in room["members"] and token not in room["spectators"] and (not isinstance(msg.get("invite"), str) or msg.get("invite") not in room["invites"]):
                     raise PermissionError("invite required")
+                ticket = msg.get("invite")
+                intended = room.get("invite_targets", {}).get(ticket) if isinstance(ticket, str) else None
+                if intended is not None and intended != client.get("user_id"):
+                    raise PermissionError("invitation recipient mismatch")
                 target = room["members"] if role == "player" else room["spectators"]
                 if token not in target and len(target) >= MAX_MEMBERS:
                     raise OverflowError("room full")
@@ -176,6 +182,8 @@ class LobbyServer:
                 join_room(room, token, role, msg.get("invite"), MAX_MEMBERS, MAX_MEMBERS)
             except (ValueError, PermissionError, OverflowError):
                 return {"ok": False, "error": "join_rejected"}
+            if isinstance(msg.get("invite"), str):
+                room.get("invite_targets", {}).pop(msg["invite"], None)
             client["room"] = rid
             return {"ok": True, "room": rid, "role": role}
         if action == "leave":
