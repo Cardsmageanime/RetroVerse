@@ -1,0 +1,36 @@
+name: ARM boot log analyzer tests
+
+on:
+  push:
+    paths:
+      - "boot/tools/analyze_uboot_log.py"
+      - "boot/tests/**"
+      - ".github/workflows/boot-log-tests.yml"
+  pull_request:
+    paths:
+      - "boot/tools/analyze_uboot_log.py"
+      - "boot/tests/**"
+      - ".github/workflows/boot-log-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-log-analyzer:
+    name: Offline parser regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Python modules
+        run: python -m py_compile boot/tools/analyze_uboot_log.py boot/tests/test_analyze_uboot_log.py
+      - name: Run regression tests
+        run: python -m unittest discover -s boot/tests -p "test_*.py" -v
