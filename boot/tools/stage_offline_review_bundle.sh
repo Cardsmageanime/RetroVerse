@@ -18,8 +18,8 @@ import pathlib, sys
 with pathlib.Path(sys.argv[1]).open("rb") as image:
     image.seek(0x38)
     magic = image.read(4)
-if magic != b"ARM\\x64":
-    raise SystemExit("Invalid ARM64 Linux Image header magic")
+if magic != bytes.fromhex("41524d64"):
+    raise SystemExit(f"Invalid ARM64 Linux Image header magic: got {magic.hex()}, expected 41524d64")
 PY
 gzip -t "$initramfs"
 gzip -dc "$initramfs" | cpio -t 2>/dev/null | grep -qx 'init' || {
