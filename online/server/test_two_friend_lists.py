@@ -56,6 +56,17 @@ class TwoListsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.s.clients["b"]["room"])
         self.assertEqual((await self.call("b","chat",text="No longer invited"))["error"],"not_in_room")
 
+    async def test_friend_removal_revokes_unspent_invite_even_when_guest_removes_host(self):
+        code=(await self.call("b","friend_code"))["code"]
+        await self.call("a","friend_request",code=code)
+        await self.call("b","friend_accept",name="Alice")
+        rid=(await self.call("a","create",name="Inner Circle",kind="friends"))["room"]
+        invitation=(await self.call("a","friend_invite",name="Bob"))["invite"]
+        self.assertIn(invitation,self.s.rooms[rid]["invites"])
+        await self.call("b","friend_remove",name="Alice")
+        self.assertNotIn(invitation,self.s.rooms[rid]["invites"])
+        self.assertEqual((await self.call("b","join",room=rid,invite=invitation))["error"],"access_denied")
+
     async def test_public_removal_is_mutual_and_separate(self):
         await self.call("a","public_friend_request",name="Bob")
         await self.call("b","public_friend_accept",name="Alice")
