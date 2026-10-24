@@ -15,6 +15,10 @@ mkdir -p "$build"
 make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 # Set static linking and cross compilation without relying on host BusyBox.
 sed -i 's/^# CONFIG_STATIC is not set$/CONFIG_STATIC=y/; s/^CONFIG_STATIC=n$/CONFIG_STATIC=y/' "$build/.config"
+# BusyBox 1.36.1's traffic-control applet uses removed CBQ UAPI definitions
+# on newer cross-toolchain Linux headers. This diagnostic initramfs does not
+# require 'tc', so disable only that optional applet.
+sed -i 's/^CONFIG_TC=y$/# CONFIG_TC is not set/' "$build/.config"
 if ! grep -qx 'CONFIG_STATIC=y' "$build/.config"; then echo 'CONFIG_STATIC option not enabled' >&2; exit 1; fi
 make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- oldconfig </dev/null
 make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j"${JOBS:-4}"
