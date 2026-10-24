@@ -32,3 +32,9 @@ Linux 7.3 reference boards:
 
 Kernel baseline: Linux 7.3.0, source commit `17bb0e2f6c8043f70a693a5f3797471cbed354c8`.
 No validated board-matched kernel/DTB, bootable SD image, or hardware RetroVerse boot currently exists.
+
+## Follow-up: legacy GPIO phandle resolution
+
+User's decompiled EmuELEC DTS has `pinctrl@ff634480/banks@ff6346c0` with `gpio-controller`, `#gpio-cells = <2>`, and `phandle = <0x27>`. The SD node's `gpio_cd = <0x27 0x30 0x00>` therefore refers to this peripheral GPIO provider, index `0x30` (48), and raw flags cell zero. This **does not yet prove** the equivalent Linux 7.3 named GPIO, electrical polarity, or detection behavior. Vendor `gpio_cd` semantics are not interchangeable with upstream `cd-gpios` without validation.
+
+Suggested next read-only check: compare `include/dt-bindings/gpio/meson-g12a-gpio.h` constants and upstream pinctrl driver ranges with the vendor DTS GPIO bank/pinmux mapping. Do not replace the upstream candidate's card-detect GPIO based on the raw numeric index alone.
