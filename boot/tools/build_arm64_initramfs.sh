@@ -16,7 +16,7 @@ make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 # Set static linking and cross compilation without relying on host BusyBox.
 sed -i 's/^# CONFIG_STATIC is not set$/CONFIG_STATIC=y/; s/^CONFIG_STATIC=n$/CONFIG_STATIC=y/' "$build/.config"
 if ! grep -qx 'CONFIG_STATIC=y' "$build/.config"; then echo 'CONFIG_STATIC option not enabled' >&2; exit 1; fi
-make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- oldconfig </dev/null
 make -C "$src" O="$build" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j"${JOBS:-4}"
 test -x "$build/busybox"
 aarch64-linux-gnu-readelf -h "$build/busybox" | grep -q 'Machine:.*AArch64'
