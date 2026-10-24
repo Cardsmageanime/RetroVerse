@@ -5,6 +5,8 @@ if [ "$#" -ne 2 ]; then echo "Usage: $0 KERNEL_SOURCE OUTPUT_DIRECTORY" >&2; exi
 SRC=$(cd "$1" && pwd -P)
 mkdir -p "$2"
 OUT=$(cd "$2" && pwd -P)
+case "$OUT/" in "$SRC/"*) echo "Output must not be inside source" >&2; exit 2;; esac
+case "$SRC/" in "$OUT/"*) echo "Source must not be inside output" >&2; exit 2;; esac
 [ "$SRC" != "$OUT" ] || { echo "Output must differ from source" >&2; exit 2; }
 [ -f "$SRC/Makefile" ] && [ -d "$SRC/arch/arm64" ] || { echo "Not an ARM64 kernel source tree" >&2; exit 2; }
 command -v make >/dev/null
@@ -13,6 +15,7 @@ command -v "${CROSS_COMPILE}gcc" >/dev/null || { echo "Missing cross compiler: $
 JOBS=${JOBS:-2}
 case "$JOBS" in *[!0-9]*|'') echo "JOBS must be a positive integer" >&2; exit 2;; esac
 [ "$JOBS" -gt 0 ] || exit 2
+[ ! -e "$OUT/.config" ] || { echo "Use a fresh output directory" >&2; exit 2; }
 make -C "$SRC" O="$OUT" ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" defconfig
 make -C "$SRC" O="$OUT" ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" -j"$JOBS" Image dtbs modules
 [ -s "$OUT/arch/arm64/boot/Image" ] || { echo "Kernel Image missing" >&2; exit 4; }
