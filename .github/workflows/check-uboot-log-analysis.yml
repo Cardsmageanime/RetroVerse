@@ -1,0 +1,29 @@
+name: Check Passive U-Boot Log Analyzer
+on:
+  push:
+    paths:
+      - 'boot/tools/analyze_uboot_log.py'
+      - 'boot/tools/test_analyze_uboot_log.py'
+      - 'boot/UBOOT_LOG_ANALYZER.md'
+      - '.github/workflows/check-uboot-log-analysis.yml'
+  pull_request:
+    paths:
+      - 'boot/tools/analyze_uboot_log.py'
+      - 'boot/tools/test_analyze_uboot_log.py'
+      - 'boot/UBOOT_LOG_ANALYZER.md'
+      - '.github/workflows/check-uboot-log-analysis.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile and test analyzer
+        run: |
+          python -m py_compile boot/tools/analyze_uboot_log.py
+          python -m unittest discover -s boot/tools -p 'test_analyze_uboot_log.py' -v
