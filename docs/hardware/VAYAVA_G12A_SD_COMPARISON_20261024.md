@@ -44,3 +44,9 @@ Suggested next read-only check: compare `include/dt-bindings/gpio/meson-g12a-gpi
 Legacy `sd_all_pins` uses `sdcard_d0_c` through `sdcard_d3_c`, `sdcard_cmd_c`, and `sdcard_clk_c`, matching mainline G12A group names. Electrical configuration may differ.
 
 Linux 7.3 `meson-g12a-gpio.h` reports `GPIOC_6 = 47`, `GPIOC_7 = 48`. Legacy `gpio_cd = <0x27 0x30 0x00>` uses numeric index 48 under the peripheral GPIO provider. **It is not established that the legacy and upstream numbering match.** Neither `GPIOC_6` nor `GPIOC_7` has been verified as the Franklin card-detect GPIO; polarity is also unverified. Keep this as a blocker, not a candidate board setting.
+
+## Linux 7.3 GPIO bank mapping follow-up
+
+User-observed `include/dt-bindings/gpio/meson-g12a-gpio.h` defines `GPIOC_6 = 47`, `GPIOC_7 = 48`; `pinctrl-meson-g12a.c` includes the C bank `GPIOC_0` through `GPIOC_7`. The legacy SD card-detect tuple `<0x27 0x30 0x00>` is a GPIO reference to the peripheral bank provider with numeric offset 48. **Tentative inference:** if vendor offsets are identical to upstream, the reference corresponds to GPIOC_7, not GPIOC_6. This needs cross-check against vendor pin numbering and observed card insertion/removal, including polarity. Do not infer that raw flags cell 0 means an active-high card detect under the vendor binding.
+
+Next evidence requested: inspect G12A pinctrl provider in the legacy DTB, find vendor GPIO bank numbering definitions (if available), and gather read-only card-detect behavior from the running known-working operating system. No device tree may be marked board-matched based solely on this inference.
