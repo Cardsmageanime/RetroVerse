@@ -27,9 +27,10 @@ if [[ -e "$root/init" || -e "$root/bin/busybox" ]]; then
 fi
 mkdir -p "$root"/{bin,sbin,etc,proc,sys,dev,tmp,run,root}
 cp "$build/busybox" "$root/bin/busybox"
-( cd "$root"; ./bin/busybox --list | while IFS= read -r app; do
-  case "$app" in */*) mkdir -p "$(dirname "$app")"; ln -sf /bin/busybox "$app";; *) ln -sf /bin/busybox "bin/$app";; esac
-done )
+# Never execute the AArch64 target binary on the x86_64 build host.
+# The default BusyBox config contains ash and mount; install the needed applets only.
+ln -s busybox "$root/bin/sh"
+ln -s busybox "$root/bin/mount"
 # Kernel executes /init directly; BusyBox ARM64 sh executes with no dynamic linker.
 cat > "$root/init" <<'EOF'
 #!/bin/sh
