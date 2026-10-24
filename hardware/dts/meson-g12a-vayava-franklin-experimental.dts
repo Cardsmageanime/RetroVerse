@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * RetroVerse Vayava Franklin / TVBOX-GAME research-only G12A candidate.
+ *
+ * DO NOT BOOT OR FLASH THIS DEVICE TREE.
+ *
+ * Known: G12A-family compatible from decompiled reference;
+ *        SD controller register range 0xffe05000/0x800, GIC SPI 190;
+ *        4-bit SD and GPIOC SD pin group names in vendor tree.
+ * Unknown: exact board identity, RAM base/regions, regulator wiring,
+ *          card-detect GPIO and polarity, UART routing, bootloader handoff,
+ *          other board peripherals and mainline driver compatibility.
+ *
+ * This intentionally has no board-specific regulator, GPIO, memory,
+ * eMMC, HDMI or boot-path configuration. Included SoC nodes inherit
+ * their upstream defaults. It is a compile/inspection artifact only.
+ */
+
+/dts-v1/;
+
+#include "meson-g12a.dtsi"
+
+/ {
+	model = "RetroVerse Vayava Franklin (experimental, not boot validated)";
+	compatible = "retroverse,vayava-franklin-experimental", "amlogic,g12a";
+};
+
+/*
+ * The vendor DT uses sd2@ffe05000 with the C-bank sdcard pin groups.
+ * This mainline SoC node remains explicitly disabled until card detect,
+ * supply wiring and SD CRC reliability are independently validated.
+ */
+&sd_emmc_b {
+	status = "disabled";
+};
+
+/* Never enable internal eMMC based on this incomplete prototype. */
+&sd_emmc_c {
+	status = "disabled";
+};
