@@ -9,11 +9,18 @@ kernel="$(realpath "$1")"
 initramfs="$(realpath "$2")"
 output="$(realpath -m "$3")"
 [[ -f "$kernel" && -f "$initramfs" ]] || { echo "Missing input artifact" >&2; exit 2; }
-for cmd in file sha256sum gzip cpio cmp stat; do
+for cmd in python3 sha256sum gzip cpio cmp; do
   command -v "$cmd" >/dev/null || { echo "Missing tool: $cmd" >&2; exit 2; }
 done
 [[ ! -e "$output" ]] || { echo "Refusing to overwrite existing output: $output" >&2; exit 2; }
-file "$kernel" | grep -q 'ARM aarch64' || { echo "Kernel is not recognized as ARM64 (file heuristic)" >&2; exit 1; }
+python3 - "$kernel" <<'PY'
+import pathlib, sys
+with pathlib.Path(sys.argv[1]).open("rb") as image:
+    image.seek(0x38)
+    magic = image.read(4)
+if magic != b"ARM\\x64":
+    raise SystemExit("Invalid ARM64 Linux Image header magic")
+PY
 gzip -t "$initramfs"
 gzip -dc "$initramfs" | cpio -t 2>/dev/null | grep -qx 'init' || {
   echo "Missing /init in archive" >&2; exit 1;
