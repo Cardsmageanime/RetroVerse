@@ -38,3 +38,9 @@ No validated board-matched kernel/DTB, bootable SD image, or hardware RetroVerse
 User's decompiled EmuELEC DTS has `pinctrl@ff634480/banks@ff6346c0` with `gpio-controller`, `#gpio-cells = <2>`, and `phandle = <0x27>`. The SD node's `gpio_cd = <0x27 0x30 0x00>` therefore refers to this peripheral GPIO provider, index `0x30` (48), and raw flags cell zero. This **does not yet prove** the equivalent Linux 7.3 named GPIO, electrical polarity, or detection behavior. Vendor `gpio_cd` semantics are not interchangeable with upstream `cd-gpios` without validation.
 
 Suggested next read-only check: compare `include/dt-bindings/gpio/meson-g12a-gpio.h` constants and upstream pinctrl driver ranges with the vendor DTS GPIO bank/pinmux mapping. Do not replace the upstream candidate's card-detect GPIO based on the raw numeric index alone.
+
+## Additional pinctrl evidence (user-observed)
+
+Legacy `sd_all_pins` uses `sdcard_d0_c` through `sdcard_d3_c`, `sdcard_cmd_c`, and `sdcard_clk_c`, matching mainline G12A group names. Electrical configuration may differ.
+
+Linux 7.3 `meson-g12a-gpio.h` reports `GPIOC_6 = 47`, `GPIOC_7 = 48`. Legacy `gpio_cd = <0x27 0x30 0x00>` uses numeric index 48 under the peripheral GPIO provider. **It is not established that the legacy and upstream numbering match.** Neither `GPIOC_6` nor `GPIOC_7` has been verified as the Franklin card-detect GPIO; polarity is also unverified. Keep this as a blocker, not a candidate board setting.
