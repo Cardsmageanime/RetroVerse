@@ -304,7 +304,24 @@ class LobbyServer:
                 except ValueError:
                     return {"ok": False, "error": "no_pending_request"}
             if action in ("friend_remove","public_friend_remove"):
-                self.accounts.remove_friend(uid,target,private=(action=="friend_remove"))
+                private = action == "friend_remove"
+                self.accounts.remove_friend(uid,target,private=private)
+                if private:
+                    # Revoke live private-room access in either direction immediately.
+                    for rid, room in list(self.rooms.items()):
+                        if room["kind"] != "friends":
+                            continue
+                        owner_uid = room.get("owner_uid")
+                        if owner_uid not in (uid, target):
+                            continue
+                        other_uid = target if owner_uid == uid else uid
+                        for member in list(room["members"] | room["spectators"]):
+                            if member != room["owner"] and self.sessions.user(member) == other_uid:
+                                self.leave(member)
+                        for ticket, invitee in list(room.get("invite_targets", {}).items()):
+                            if invitee == other_uid:
+                                room["invite_targets"].pop(ticket, None)
+                                room["invites"].discard(ticket)
                 return {"ok": True}
             if action == "friend_request":
                 try:
