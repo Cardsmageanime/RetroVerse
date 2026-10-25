@@ -6,6 +6,28 @@ import re
 from pathlib import Path
 
 
+def enclosing_block(text, position):
+    """Return smallest balanced DTS block enclosing a source offset."""
+    stack = []
+    for i, char in enumerate(text[:position + 1]):
+        if char == "{":
+            stack.append(i)
+        elif char == "}" and stack:
+            stack.pop()
+    if not stack:
+        return None
+    start = stack[-1]
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i]
+    return None
+
+
 def inspect(text):
     start = re.search(r"(?m)^\s*sd2@ffe05000\s*\{", text)
     if not start:
@@ -35,8 +57,13 @@ def inspect(text):
     controller_candidates = []
     for match in re.finditer(r"\bphandle\s*=\s*<\s*(0x[0-9a-f]+|\d+)\s*>\s*;", text, re.I):
         if int(match.group(1), 0) == phandle:
-            controller_candidates.append(text[max(0, match.start() - 600):match.start()])
-    controller_found = any("gpio-controller;" in s and "#gpio-cells = <0x02>" in s for s in controller_candidates)
+            controller_candidates.append(enclosing_block(text, match.start()))
+    controller_found = any(
+        s is not None
+        and re.search(r"\bgpio-controller\s*;", s)
+        and re.search(r"#gpio-cells\s*=\s*<\s*(?:0x0*2|2)\s*>\s*;", s, re.I)
+        for s in controller_candidates
+    )
     return {
         "status": "research-only",
         "vendor_sd_node": "sd2@ffe05000",
