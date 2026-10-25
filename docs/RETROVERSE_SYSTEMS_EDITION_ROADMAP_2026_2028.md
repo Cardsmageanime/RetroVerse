@@ -17,7 +17,7 @@
 | 11–12 | Inspect EmuELEC boot scripts, G12A identity, SD GPIO and power references | Reference inspection done; U-Boot `saveenv` hazard documented, board wiring unknown | GPIO/CD polarity, regulators, DRAM and boot chain verified |
 | 13 | Brand-neutral SD-card policy and eligibility-check logic | 6/6 unit tests passed on Mint; not a physical installer | Validate live inventory and reliability before any write |
 | 14 | Read-only lsblk JSON storage inventory | 6/6 unit tests passed on Mint; saved real report **not yet reviewed** | Validate against user report, improve system disk and nested mount protection |
-| 15 | Storage reliability/read-only diagnostics | Planned | Evidence-based card/reader assessment; no destructive probing of reference card |
+| 15 | Storage reliability/read-only diagnostics | Offline evidence checker and 6 regression tests committed; hardware verification outstanding | Evidence-based card/reader assessment; no destructive probing of reference card |
 | 16 | Board DTB reconciliation and G12A GPIO mapping | Planned; research-only DTB remains disabled | Board-specific supplies/pins/capabilities verified |
 | 17 | Nonpersistent U-Boot boot-chain verification | Planned | External MMC/USB indices, `booti`/`bootm`, address map and recovery path demonstrated without writes to eMMC |
 | 18 | Minimal external SD/USB test image | **Blocked** until 15–17 pass | Explicit removable target + safe image/layout, readback, rollback |
@@ -62,3 +62,6 @@ Implement Phases 1–5 incrementally, using testable offline code, documented ac
 
 ## Working agreement
 GitHub development and offline tests can proceed without connected GameBox. Physical verification needs user-provided logs and deliberate supervised tests. No autonomous background work is implied.
+
+## Source-code learning materials
+- [Lesson 001: SD reliability and Python unit tests](learning/LESSON_001_SD_RELIABILITY_AND_TESTS.md) explains the milestone's exact source files, how to execute tests and how to review GitHub changes. Continue adding one lesson for every substantial coding milestone so the project owner can study from beginning to end.
