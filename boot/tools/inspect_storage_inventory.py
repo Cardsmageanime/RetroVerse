@@ -13,13 +13,22 @@ def analyze(data):
     for dev in data["blockdevices"]:
         if not isinstance(dev, dict) or dev.get("type") != "disk":
             continue
+        # Walk descendant partitions, crypt, LVM and mapped filesystems.
         children = dev.get("children") or []
-        mounts = [m for child in children if isinstance(child, dict)
-                  for m in ((child.get("mountpoints") or []) +
-                            ([child["mountpoint"]] if child.get("mountpoint") else [])) if m]
-        mounts.extend(m for m in (dev.get("mountpoints") or []) if m)
-        if dev.get("mountpoint"):
-            mounts.append(dev["mountpoint"])
+        mounts = []
+        def visit(node):
+            if not isinstance(node, dict):
+                return
+            points = node.get("mountpoints")
+            if isinstance(points, list):
+                mounts.extend(m for m in points if isinstance(m, str) and m)
+            point = node.get("mountpoint")
+            if isinstance(point, str) and point:
+                mounts.append(point)
+            for child in node.get("children") or []:
+                visit(child)
+        visit(dev)
+        mounts = list(dict.fromkeys(mounts))
         name = dev.get("name")
         size = dev.get("size")
         # Only unrounded integer bytes are accepted.
