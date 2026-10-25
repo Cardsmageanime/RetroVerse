@@ -34,6 +34,25 @@ class TestFranklinGPIO(unittest.TestCase):
         self.assertFalse(report["approved_for_boot"])
         self.assertFalse(report["approved_for_flash"])
 
+    def test_distant_gpio_controller_is_resolved_by_node(self):
+        separated = VENDOR.replace(
+            "    phandle = <0x27>;",
+            "    /* " + ("padding " * 200) + " */\\n    phandle = <0x27>;"
+        )
+        report = module.inspect(separated)
+        self.assertTrue(report["vendor_gpio_controller_candidate_found"])
+
+    def test_unrelated_gpio_controller_does_not_match(self):
+        fake = VENDOR.replace("    gpio-controller;\\n", "")
+        fake = "other { gpio-controller; #gpio-cells = <0x02>; };\\n" + fake
+        report = module.inspect(fake)
+        self.assertFalse(report["vendor_gpio_controller_candidate_found"])
+        self.assertFalse(report["approved_for_boot"])
+
+    def test_decimal_gpio_cells(self):
+        decimal = VENDOR.replace("#gpio-cells = <0x02>", "#gpio-cells = <2>")
+        self.assertTrue(module.inspect(decimal)["vendor_gpio_controller_candidate_found"])
+
     def test_missing_sd_node_fails_closed(self):
         with self.assertRaises(ValueError):
             module.inspect("not a DTS")
