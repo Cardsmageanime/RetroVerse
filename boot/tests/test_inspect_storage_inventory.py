@@ -38,6 +38,23 @@ class InventoryTests(unittest.TestCase):
         result = m.analyze({"blockdevices": [disk("sdc", "64G", True, "usb")]})
         self.assertFalse(result["devices"][0]["inventory_candidate"])
 
+    def test_nested_mount_is_detected(self):
+        root = {"name": "sdc1", "type": "part", "children": [
+            {"name": "cryptdata", "type": "crypt", "mountpoints": ["/home"]}]}
+        report = m.analyze({"blockdevices": [disk("sdc", 64_000_000_000, True, "usb", [root])]})
+        dev = report["devices"][0]
+        self.assertIn("/home", dev["existing_mounts"])
+        self.assertIn("mounted-partitions-present", dev["issues"])
+        self.assertFalse(dev["install_authorized"])
+
+    def test_intact_system_disk_with_nested_root_is_blocked(self):
+        dev = disk("sda", 500_000_000_000, False, "sata", [
+            {"name": "sda3", "type": "part", "children": [
+                {"name": "root", "type": "lvm", "mountpoint": "/"}]}])
+        report = m.analyze({"blockdevices": [dev]})
+        self.assertIn("/", report["devices"][0]["existing_mounts"])
+        self.assertFalse(report["devices"][0]["inventory_candidate"])
+
     def test_invalid_input_rejected(self):
         with self.assertRaises(ValueError):
             m.analyze({"foo": []})
