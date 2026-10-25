@@ -28,7 +28,10 @@
 | 23 | Safe update mechanism | Planned | Atomic/non-destructive update with rollback preserving ROMs/saves/configuration |
 | 24 | RetroVerse Online | Later (after boot) | Account/security, friends, public/private lobbies and compatible cross-platform netplay; cheats blocked in **all** multiplayer |
 | 25 | Community and polish | Later | Spectator/creator lobbies, chat and platform badges; continuous/shuffle music; optional backgrounds and theme palettes |
-| 26 | Release qualification | Later | Multi-board boot matrix, SD/USB brands/capacities, regression tests and signed release artifacts |
+| 26 | Release qualification | **RESERVED — DO NOT DEVELOP** | Phase 6 exclusively for joint user/ChatGPT planning later. No implementation, release publishing, packaging, or public launch in this scope. |
+
+## Active mandate — Phases 1–5 only
+Implement Phases 1–5 incrementally, using testable offline code, documented acceptance gates and verified external evidence when available. **Never claim phases are completed without passing each acceptance gate.** Phase 6 is reserved for future joint decisions between the owner and ChatGPT; no release-qualification implementation or publishing until separately authorized. Physical boot/firmware work must remain blocked until board-specific safety conditions have been verified.
 
 ## Near-term sprint: focus on milestone 14 then one gate at a time
 1. **Validate real storage inventory**: inspect `~/Downloads/RetroVerse-Storage-Report.json`, confirm the internal SATA SSD remains excluded and the mounted EmuELEC reference card is never an installer target.
