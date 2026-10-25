@@ -37,14 +37,14 @@ class TestFranklinGPIO(unittest.TestCase):
     def test_distant_gpio_controller_is_resolved_by_node(self):
         separated = VENDOR.replace(
             "    phandle = <0x27>;",
-            "    /* " + ("padding " * 200) + " */\\n    phandle = <0x27>;"
+            "    /* " + ("padding " * 200) + " */\n    phandle = <0x27>;"
         )
         report = module.inspect(separated)
         self.assertTrue(report["vendor_gpio_controller_candidate_found"])
 
     def test_unrelated_gpio_controller_does_not_match(self):
-        fake = VENDOR.replace("    gpio-controller;\\n", "")
-        fake = "other { gpio-controller; #gpio-cells = <0x02>; };\\n" + fake
+        fake = VENDOR.replace("    gpio-controller;\n", "")
+        fake = "other { gpio-controller; #gpio-cells = <0x02>; };\n" + fake
         report = module.inspect(fake)
         self.assertFalse(report["vendor_gpio_controller_candidate_found"])
         self.assertFalse(report["approved_for_boot"])
