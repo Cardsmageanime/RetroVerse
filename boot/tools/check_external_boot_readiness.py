@@ -20,6 +20,8 @@ STORAGE_GATES = (
 
 def evaluate(profile, evidence):
     findings = []
+    if evidence.get("board_id") != "franklin":
+        findings.append("Evidence board_id missing or mismatched: expected franklin.")
     if profile.get("android_amlogic_dt_id_observed") != "g12a_u212_2g":
         findings.append("Board-specific G12A u212 2GB identification missing or changed.")
     if profile.get("android_sd_bus_width_bits_observed") != 4:
@@ -29,6 +31,8 @@ def evaluate(profile, evidence):
     for gate in REQUIRED_GATES:
         if evidence.get(gate) is not True:
             findings.append("Required boot evidence not verified: " + gate)
+    if evidence.get("android_internal_storage_untouched") is not True:
+        findings.append("Internal storage preservation not verified: android_internal_storage_untouched")
     for gate in STORAGE_GATES:
         if evidence.get(gate) is not True:
             findings.append("Storage evidence not verified: " + gate)
