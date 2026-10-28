@@ -11,10 +11,10 @@ MAX_SIZE = 16 * 1024 * 1024
 TARGET_PROPERTIES = {"model", "compatible", "status", "device_type"}
 
 def parse(data):
-    if not isinstance(data, bytes) or not 40 <= len(data) <= MAX_SIZE:
+    if not isinstance(data, bytes) or not 56 <= len(data) <= MAX_SIZE:
         raise ValueError("Invalid DTB data length")
     magic, total, structure, strings, reserve, version, last, cpu, strings_size, structure_size = struct.unpack_from(">10I", data)
-    if magic != MAGIC or total != len(data) or version < 16 or last > version:
+    if magic != MAGIC or total != len(data) or version < 17 or last > version:
         raise ValueError("Invalid DTB header")
     if any(a < 40 or a > total or n > total - a for a, n in (
             (structure, structure_size), (strings, strings_size), (reserve, 16))):
@@ -22,7 +22,7 @@ def parse(data):
     s_end, n_end = structure + structure_size, strings + strings_size
     if structure < n_end and strings < s_end:
         raise ValueError("DTB sections overlap")
-    position, stack, nodes, finished = structure, [], [], False
+    if reserve < s_end and structure < reserve + 16:\n        raise ValueError("Reserve map overlaps structure")\n    if reserve < n_end and strings < reserve + 16:\n        raise ValueError("Reserve map overlaps strings")\n    position, stack, nodes, finished = structure, [], [], False
     while position + 4 <= s_end:
         token = struct.unpack_from(">I", data, position)[0]
         position += 4
@@ -32,7 +32,7 @@ def parse(data):
                 raise ValueError("Unterminated DTB node")
             name = data[position:terminator].decode("utf-8", errors="replace")
             position = (terminator + 4) & ~3
-            stack.append(name)
+            if (terminator + 4) & ~3 > s_end:\n                raise ValueError("Node padding out of bounds")\n            stack.append(name)
             if len(stack) > 64:
                 raise ValueError("Too many nested nodes")
             nodes.append({"path": "/" + "/".join(p for p in stack if p), "properties": {}})
@@ -75,7 +75,7 @@ def parse(data):
         raise ValueError("No DTB end marker")
     relevant = [node for node in nodes if node["path"] == "/" or
                 any(tag in node["path"].lower() for tag in ("mmc@", "sd@", "usb@", "memory@"))]
-    return {"format": "nexus-relay-dtb-node-evidence-v1",
+    return {"format": "nexus-relay-dtb-node-evidence-v2",
             "observed_nodes": relevant, "total_nodes": len(nodes),
             "board_match_verified": False, "usb_boot_verified": False,
             "boot_authorized": False, "write_authorized": False,
@@ -87,7 +87,7 @@ def main():
     args = parser.parse_args()
     try:
         p = args.dtb_copy
-        if p.is_symlink() or not p.is_file() or p.stat().st_size > MAX_SIZE:
+        if p.is_symlink() or not p.is_file() or not 56 <= p.stat().st_size <= MAX_SIZE:
             raise ValueError("Use a normal copied DTB file, not a device")
         result = parse(p.read_bytes())
     except (OSError, ValueError) as exc:
