@@ -45,7 +45,17 @@ class Tests(unittest.TestCase):
     def test_wrong_input_type(self):
         with self.assertRaises(ValueError): mod.parse("not bytes")
     def test_missing_end_marker(self):
-        d = bytearray(fixture()); struct.pack_into(">I", d, 56 + 4 + 4 + 12 + 4 + 8 + 12 + 4 + 8 + 16 + 4 + 16, 0)
+        d = bytearray(fixture()); end = 56 + struct.unpack_from(">I", d, 36)[0] - 4; struct.pack_into(">I", d, end, 0)
+        with self.assertRaises(ValueError): mod.parse(bytes(d))
+
+    def test_section_overlap_rejected(self):
+        d = bytearray(fixture()); struct.pack_into(">I", d, 12, 60)
+        with self.assertRaises(ValueError): mod.parse(bytes(d))
+    def test_old_version_rejected(self):
+        d = bytearray(fixture()); struct.pack_into(">I", d, 20, 16)
+        with self.assertRaises(ValueError): mod.parse(bytes(d))
+    def test_empty_property_strings_rejected(self):
+        d = bytearray(fixture()); struct.pack_into(">I", d, 32, 0)
         with self.assertRaises(ValueError): mod.parse(bytes(d))
 
 if __name__ == "__main__":
